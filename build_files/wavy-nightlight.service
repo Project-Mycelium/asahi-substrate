@@ -1,0 +1,11 @@
+[Unit]
+Description=WavyOS Night Light Configuration
+After=gnome-session-initialized.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/color-tint.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target

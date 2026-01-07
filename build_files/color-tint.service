@@ -1,0 +1,11 @@
+[Unit]
+Description=WavyOS Color Tint Shader
+After=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/color-tint.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical.target
