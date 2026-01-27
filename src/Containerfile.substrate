@@ -185,6 +185,9 @@ RUN mkdir -p /home/linuxbrew/.linuxbrew && \
 COPY build_files/first-boot-setup.sh /usr/libexec/formless-first-boot
 RUN chmod +x /usr/libexec/formless-first-boot
 
+# Create state directory for first-boot marker
+RUN mkdir -p /var/lib/formless
+
 # First-boot service
 RUN mkdir -p /usr/lib/systemd/system && \
     cat > /usr/lib/systemd/system/formless-first-boot.service << 'EOF'
@@ -234,8 +237,8 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 
-# Create formless user
-RUN useradd -m -s /bin/bash -G wheel,audio,video formless 2>/dev/null || true
+# Create formless user (UID 1000 to match Homebrew directory ownership)
+RUN useradd -m -u 1000 -s /bin/bash -G wheel,audio,video formless 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
 # 3j. Initramfs Generation
