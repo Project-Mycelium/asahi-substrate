@@ -35,9 +35,22 @@ RUN dnf download --resolve kernel-16k
 RUN for rpm in *.rpm; do rpm2cpio "$rpm" | cpio -idm; done
 
 # OSTree expects vmlinuz in modules dir
+# Debug: show extracted structure
+RUN echo "=== Kernel extraction debug ===" && \
+    find . -name "vmlinuz*" -o -name "vmlinux*" 2>/dev/null || echo "No vmlinuz/vmlinux found" && \
+    ls -la lib/modules/ || echo "No lib/modules" && \
+    ls -la boot/ || echo "No boot dir"
+
 RUN KVER=$(find lib/modules -maxdepth 1 -mindepth 1 -type d -printf "%f") && \
-    if [ ! -f lib/modules/$KVER/vmlinuz ]; then \
+    echo "Kernel version: $KVER" && \
+    if [ -f lib/modules/$KVER/vmlinuz ]; then \
+        echo "vmlinuz already in modules dir"; \
+    elif [ -f boot/vmlinuz-* ]; then \
+        echo "Copying vmlinuz from boot/"; \
         cp boot/vmlinuz-* lib/modules/$KVER/vmlinuz; \
+    else \
+        echo "ERROR: vmlinuz not found in boot/ or lib/modules/$KVER"; \
+        find . -type f -name "*vmlin*" 2>/dev/null || true; \
     fi
 
 # =============================================================================

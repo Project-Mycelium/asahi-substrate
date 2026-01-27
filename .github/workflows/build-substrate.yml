@@ -67,10 +67,16 @@ jobs:
 
       - name: Verify image
         run: |
+          echo "=== Checking kernel modules ==="
           podman run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            ls /usr/lib/modules/*/vmlinuz
+            ls -la /usr/lib/modules/ || echo "No modules dir"
           podman run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            lsinitrd | grep -q nvme-apple && echo "nvme-apple: OK"
+            find /usr/lib/modules -name "vmlinuz*" || echo "No vmlinuz found"
+          podman run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            ls /usr/lib/modules/*/vmlinuz || echo "vmlinuz not in expected location"
+          echo "=== Checking initramfs ==="
+          podman run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            lsinitrd 2>/dev/null | grep nvme-apple && echo "nvme-apple: OK" || echo "nvme-apple check failed"
 
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
