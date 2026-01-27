@@ -9,6 +9,9 @@ log() { logger -t "$LOG_TAG" "$1"; echo "[first-boot] $1"; }
 
 log "Starting Formless Substrate first boot setup..."
 
+# Ensure state directory exists (may not persist from image in bootc)
+mkdir -p /var/lib/formless
+
 # =============================================================================
 # 0. SSH KEY RESTORATION (in case /var persisted without keys)
 # =============================================================================

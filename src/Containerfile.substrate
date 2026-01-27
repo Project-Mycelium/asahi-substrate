@@ -139,9 +139,14 @@ RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel-nopasswd && \
     chmod 440 /etc/sudoers.d/wheel-nopasswd
 
 # -----------------------------------------------------------------------------
-# 7. Branding - Make it clear this is Substrate
+# 7. Branding & Console Configuration
 # -----------------------------------------------------------------------------
 RUN echo 'substrate' > /etc/hostname
+
+# Larger console font for HiDPI screens (dev-friendly)
+RUN echo 'FONT=latarcyrheb-sun32' > /etc/vconsole.conf
+
+# OS branding
 RUN echo 'PRETTY_NAME="Formless Substrate (Fedora Asahi)"' > /etc/os-release.d/substrate.conf || \
     sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="Formless Substrate (Fedora Asahi)"/' /etc/os-release
 
