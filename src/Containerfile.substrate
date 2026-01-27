@@ -1,14 +1,17 @@
-# FORMLESS SUBSTRATE v4
+# FORMLESS SUBSTRATE v5
 # Minimal Apple Silicon bootc image - Formless IS the OS
 #
 # ARCHITECTURE:
-#   Stage 1: Kernel extraction (from Asahi COPR)
-#   Stage 2: Package extraction (hardware enablement, tools)
-#   Stage 3: Assembly (graft onto base image)
+#   Single stage build on Fedora Asahi Remix base-atomic
+#   Base already includes: Asahi kernel, Mesa, audio, NetworkManager
+#   We add: SSH hardening, Tailscale, Homebrew bootstrap, formless user
 #
-# BASE OPTIONS:
-#   - fedora-bootc:43 (stable, ~2.5GB, DNF available)
-#   - gnomeos-base-aarch64:nightly (substrate, ~1GB, no DNF)
+# BASE: quay.io/fedora-asahi-remix-atomic-desktops/base-atomic:41
+#   - Asahi kernel (6.17.12-400.asahi.fc41.aarch64+16k)
+#   - Mesa with Asahi GPU drivers
+#   - PipeWire + speakersafetyd
+#   - NetworkManager + iwd
+#   - Podman
 #
 # PACKAGE MANAGEMENT:
 #   System: OSTree layers (baked at build time)
@@ -18,74 +21,12 @@
 # =============================================================================
 # BUILD ARGUMENTS
 # =============================================================================
-ARG BASE_IMAGE="quay.io/fedora/fedora-bootc:43"
-ARG FORMLESS_VERSION="latest"
+ARG BASE_IMAGE="quay.io/fedora-asahi-remix-atomic-desktops/base-atomic:41"
 
 # =============================================================================
-# STAGE 1: KERNEL EXTRACTION
-# Extract Asahi kernel from COPR (always uses Fedora for extraction)
+# SINGLE STAGE BUILD
 # =============================================================================
-FROM quay.io/fedora/fedora:41 AS kernel-extractor
-
-RUN dnf install -y 'dnf5-command(copr)' cpio findutils
-RUN dnf copr enable -y @asahi/kernel
-
-WORKDIR /kernel
-RUN dnf download --resolve kernel-16k
-RUN for rpm in *.rpm; do rpm2cpio "$rpm" | cpio -idm; done
-
-# OSTree expects vmlinuz in modules dir (Asahi kernel already includes it)
-RUN KVER=$(find lib/modules -maxdepth 1 -mindepth 1 -type d -printf "%f") && \
-    if [ ! -f lib/modules/$KVER/vmlinuz ] && [ -f boot/vmlinuz-* ]; then \
-        cp boot/vmlinuz-* lib/modules/$KVER/vmlinuz; \
-    fi
-
-# =============================================================================
-# STAGE 2: PACKAGE EXTRACTION
-# Extract hardware enablement packages (works regardless of base image)
-# =============================================================================
-FROM quay.io/fedora/fedora:41 AS package-extractor
-
-RUN dnf install -y 'dnf5-command(copr)' cpio findutils rpm
-RUN dnf copr enable -y @asahi/mesa
-
-WORKDIR /packages
-
-# Download all required packages
-RUN dnf download --resolve --destdir=/packages/rpms \
-    mesa-dri-drivers \
-    asahi-fwupdate \
-    asahi-bless \
-    asahi-scripts \
-    asahi-audio \
-    alsa-ucm-asahi \
-    speakersafetyd \
-    pipewire \
-    wireplumber \
-    m1n1 \
-    dracut-asahi \
-    openssh-server \
-    tailscale \
-    NetworkManager \
-    iwd \
-    podman \
-    curl \
-    git \
-    jq
-
-# Extract all RPMs to /packages/root
-RUN mkdir -p /packages/root && \
-    cd /packages/rpms && \
-    for rpm in *.rpm; do \
-        rpm2cpio "$rpm" | (cd /packages/root && cpio -idm); \
-    done
-
-# =============================================================================
-# STAGE 3: ASSEMBLY
-# Graft everything onto the base image
-# =============================================================================
-ARG BASE_IMAGE
-FROM ${BASE_IMAGE} AS substrate
+FROM ${BASE_IMAGE}
 
 # Metadata
 LABEL org.opencontainers.image.title="Formless Substrate"
@@ -94,50 +35,25 @@ LABEL org.opencontainers.image.source="https://github.com/ericrowan/asahi-substr
 LABEL containers.bootc="1"
 
 # -----------------------------------------------------------------------------
-# 3a. Cleanup (for fedora-bootc base only)
+# 1. Install additional packages via DNF (base-atomic has DNF available)
 # -----------------------------------------------------------------------------
-RUN if command -v dnf &>/dev/null; then \
-        echo "Fedora base detected - removing bloat..."; \
-        dnf remove -y --setopt=install_weak_deps=False \
-            nvidia-gpu-firmware \
-            amd-gpu-firmware \
-            atheros-firmware \
-            mt7xxx-firmware \
-            intel-gpu-firmware \
-            'qemu-user-static*' \
-            'python3-botocore*' \
-        || true && \
-        dnf clean all; \
-    else \
-        echo "Non-Fedora base - skipping DNF cleanup"; \
-    fi
+RUN dnf install -y --setopt=install_weak_deps=False \
+    openssh-server \
+    tailscale \
+    curl \
+    git \
+    jq \
+    procps-ng \
+    && dnf clean all
 
 # -----------------------------------------------------------------------------
-# 3b. Kernel Graft
-# -----------------------------------------------------------------------------
-RUN rm -rf /usr/lib/modules/*
-COPY --from=kernel-extractor /kernel/lib/modules /usr/lib/modules
-
-# -----------------------------------------------------------------------------
-# 3c. Hardware Enablement Graft (for GNOME OS base)
-# For fedora-bootc, packages are already available; for GNOME OS, we graft them
-# -----------------------------------------------------------------------------
-# Check if we need to graft packages (GNOME OS won't have these)
-RUN if ! command -v pipewire &>/dev/null; then \
-        echo "Grafting hardware packages from extraction stage..."; \
-    fi
-COPY --from=package-extractor /packages/root/usr /usr
-COPY --from=package-extractor /packages/root/etc /etc
-COPY --from=package-extractor /packages/root/var /var
-
-# -----------------------------------------------------------------------------
-# 3d. Remote Access Layer (SSH + Tailscale)
+# 2. Remote Access Layer (SSH + Tailscale)
 # -----------------------------------------------------------------------------
 # SSH hardening - keys only
-RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config 2>/dev/null || true && \
-    sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config 2>/dev/null || true && \
-    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config 2>/dev/null || true && \
-    sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config 2>/dev/null || true
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 
 # Bake in authorized keys
 RUN mkdir -p /etc/skel/.ssh && chmod 700 /etc/skel/.ssh
@@ -149,35 +65,31 @@ RUN cat /tmp/authorized_keys.d/*.pub > /etc/skel/.ssh/authorized_keys && \
 # Tailscale auto-start service
 COPY build_files/tailscale-autostart.service /usr/lib/systemd/system/
 
-# Enable services
-RUN systemctl enable sshd.service 2>/dev/null || true && \
-    systemctl enable tailscaled.service 2>/dev/null || true && \
-    systemctl enable tailscale-autostart.service 2>/dev/null || true
+# Enable remote access services
+RUN systemctl enable sshd.service && \
+    systemctl enable tailscaled.service && \
+    systemctl enable tailscale-autostart.service
 
 # -----------------------------------------------------------------------------
-# 3e. Audio Configuration
+# 3. Audio Configuration
 # -----------------------------------------------------------------------------
+# Custom PipeWire config (base already has speakersafetyd enabled)
 RUN rm -f /etc/pipewire/pipewire.conf.d/99-asahi.conf 2>/dev/null || true
 COPY build_files/audio-fix.conf /etc/pipewire/pipewire.conf.d/99-substrate-quantum.conf
 
-# Enable speaker protection (CRITICAL for Apple Silicon)
+# Ensure speaker protection is enabled (CRITICAL for Apple Silicon)
 RUN systemctl enable speakersafetyd.service 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
-# 3f. Network Configuration
-# -----------------------------------------------------------------------------
-RUN systemctl enable NetworkManager.service 2>/dev/null || true
-
-# -----------------------------------------------------------------------------
-# 3g. Power Management
+# 4. Power Management
 # -----------------------------------------------------------------------------
 COPY build_files/99-asahi-power.rules /etc/udev/rules.d/
 
 # -----------------------------------------------------------------------------
-# 3h. Homebrew Bootstrap (for user-space packages)
-# Install location that works with OSTree immutability
-# Note: /home is a symlink to /var/home in bootc, so we create /var/home first
+# 5. Homebrew Bootstrap
 # -----------------------------------------------------------------------------
+# Create Homebrew directory structure
+# Note: /home is a symlink to /var/home in bootc
 RUN mkdir -p /var/home/linuxbrew/.linuxbrew && \
     chmod 775 /var/home/linuxbrew && \
     chown -R 1000:1000 /var/home/linuxbrew
@@ -191,56 +103,51 @@ RUN mkdir -p /var/lib/formless
 
 # First-boot service
 COPY build_files/formless-first-boot.service /usr/lib/systemd/system/
-RUN systemctl enable formless-first-boot.service 2>/dev/null || true
+RUN systemctl enable formless-first-boot.service
 
 # -----------------------------------------------------------------------------
-# 3i. Formless Integration (placeholder for binary)
+# 6. Formless Integration
 # -----------------------------------------------------------------------------
-# Formless service definition (binary will be installed via Homebrew or container)
+# Formless service definition (binary installed via Homebrew or container)
 COPY build_files/formless.service /usr/lib/systemd/system/
 
 # Create formless user (UID 1000 to match Homebrew directory ownership)
-RUN useradd -m -u 1000 -s /bin/bash -G wheel,audio,video formless 2>/dev/null || true
+RUN useradd -m -u 1000 -s /bin/bash -G wheel,audio,video formless 2>/dev/null || \
+    usermod -aG wheel,audio,video formless 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
-# 3j. Initramfs Generation
+# 7. Validation
 # -----------------------------------------------------------------------------
-RUN echo 'add_drivers+=" nvme-apple "' > /etc/dracut.conf.d/asahi.conf && \
-    echo 'hostonly="no"' >> /etc/dracut.conf.d/asahi.conf && \
-    echo 'omit_dracutmodules+=" syslog "' >> /etc/dracut.conf.d/asahi.conf
+RUN bootc container lint || echo "Lint warnings (non-fatal)"
 
+# Verify kernel is Asahi
 RUN KVER=$(ls /usr/lib/modules | head -n 1) && \
-    echo "Generating initramfs for $KVER" && \
-    depmod -a $KVER && \
-    dracut --force --kver $KVER
-
-# -----------------------------------------------------------------------------
-# 3k. Validation
-# -----------------------------------------------------------------------------
-RUN if command -v bootc &>/dev/null; then \
-        bootc container lint || echo "Lint warnings (non-fatal)"; \
+    echo "Kernel: $KVER" && \
+    if echo "$KVER" | grep -q "asahi"; then \
+        echo "Asahi kernel confirmed"; \
     else \
-        echo "bootc not available - skipping lint"; \
+        echo "WARNING: Non-Asahi kernel detected!" && exit 1; \
     fi
 
 # =============================================================================
 # SUBSTRATE MANIFEST
 # =============================================================================
-# INCLUDED:
+# INCLUDED (from base):
 #   - Asahi kernel (kernel-16k) with Apple Silicon drivers
 #   - Mesa GPU drivers (asahi)
 #   - Audio stack (PipeWire + speakersafetyd)
 #   - Network (NetworkManager + iwd)
 #   - Container runtime (Podman)
+#
+# ADDED:
 #   - Remote access (SSH + Tailscale)
-#   - Homebrew (for user packages)
+#   - Homebrew bootstrap
 #   - Formless service definition
 #
 # EXCLUDED:
 #   - Desktop environment (GNOME/KDE)
 #   - Login manager (GDM)
-#   - Package manager GUI (gnome-software)
-#   - Unnecessary firmware (nvidia, amd, etc.)
+#   - Package manager GUI
 #
 # PACKAGE MANAGEMENT:
 #   System: Immutable (OSTree)
