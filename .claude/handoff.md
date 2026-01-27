@@ -134,5 +134,36 @@ cp target/release/formless /home/linuxbrew/.linuxbrew/bin/
 sudo systemctl restart formless
 ```
 
+## Session 2: Kernel Deployed on M1
+
+**What was done:**
+1. SSH'd into M1 substrate (100.73.161.5 via Tailscale)
+2. Fixed Homebrew permissions
+3. Installed Rust toolchain via rustup
+4. Built formless-kernel in a Fedora container (podman) to get correct glibc/gcc
+5. Installed binaries to `/home/linuxbrew/.linuxbrew/bin/`
+6. Started the kernel (it runs but has a runtime detection issue - can't find podman)
+
+**Key finding:**
+The bootc image is read-only - can't layer packages via rpm-ostree due to version conflicts. Solution: Added gcc/glibc-devel to Containerfile.substrate for future builds.
+
+**Current kernel status:**
+- Binary installed and runs
+- Needs fix in formless-kernel to detect podman correctly
+- The kernel creates directories and starts but exits quickly
+
+**Commands that worked:**
+```bash
+# Build in container (on M1)
+podman run --rm -v ~/src/formless-kernel:/build:Z -w /build fedora:42 bash -c \
+  'dnf install -y gcc gcc-c++ make rust cargo openssl-devel protobuf-compiler protobuf-devel alsa-lib-devel libstdc++-devel && cargo build --release'
+
+# Install binaries
+cp ~/src/formless-kernel/target/release/formless /home/linuxbrew/.linuxbrew/bin/
+
+# Start kernel
+FORMLESS_HOME=/home/formless/.formless formless start
+```
+
 ---
-*Handoff created: 2026-01-27*
+*Handoff updated: 2026-01-27*

@@ -44,6 +44,10 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     git \
     jq \
     procps-ng \
+    gcc \
+    gcc-c++ \
+    make \
+    glibc-devel \
     && dnf clean all
 
 # -----------------------------------------------------------------------------
