@@ -144,7 +144,7 @@ RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel-nopasswd && \
 RUN echo 'substrate' > /etc/hostname
 
 # Larger console font for HiDPI screens (dev-friendly)
-RUN echo 'FONT=latarcyrheb-sun32' > /etc/vconsole.conf
+RUN echo 'FONT=sun12x22' > /etc/vconsole.conf
 
 # OS branding
 RUN echo 'PRETTY_NAME="Formless Substrate (Fedora Asahi)"' > /etc/os-release.d/substrate.conf || \
