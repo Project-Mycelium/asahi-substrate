@@ -74,8 +74,12 @@ RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/s
     sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 
-# Prepare authorized_keys location
+# Prepare authorized_keys location and bake in keys from build_files/authorized_keys.d/
 RUN mkdir -p /etc/skel/.ssh && chmod 700 /etc/skel/.ssh
+COPY build_files/authorized_keys.d/*.pub /tmp/authorized_keys.d/
+RUN cat /tmp/authorized_keys.d/*.pub > /etc/skel/.ssh/authorized_keys && \
+    chmod 600 /etc/skel/.ssh/authorized_keys && \
+    rm -rf /tmp/authorized_keys.d
 
 # Tailscale auto-start service (uses auth key from /etc/default/tailscale-autostart)
 COPY build_files/tailscale-autostart.service /usr/lib/systemd/system/

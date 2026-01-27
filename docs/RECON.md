@@ -160,30 +160,70 @@ podman run --rm asahi-substrate:latest rpm -q kernel-16k asahi-fwupdate asahi-au
 
 ---
 
-## 6. Open Questions (Requires Physical Access)
+## 6. Live System Data (Captured 2026-01-27)
 
-These cannot be answered without SSH or physical access to the Asahi machine:
+SSH access established via Tailscale (100.73.161.5) and LAN (192.168.8.114).
 
-1. **Display:**
-   - What DRM driver is active? (SimpleDRM vs apple-dcp)
-   - What resolution/refresh is being used?
-   - Does external display work?
+### 6.1 Hardware Enumeration
 
-2. **Hardware Enumeration:**
-   - `uname -a` output
-   - `cat /etc/os-release`
-   - `dmesg | grep -i drm` output
-   - `cat /proc/cmdline`
+```
+Kernel: Linux asahi-atomic 6.17.12-400.asahi.fc42.aarch64+16k
+OS: Fedora 42.20251228.0 (Silverblue)
+Boot: BOOT_IMAGE=(hd0,gpt8)/boot/ostree/default-.../vmlinuz-6.17.12-400.asahi.fc42.aarch64+16k
+      root=UUID=8300ef97-4760-4fee-b4ee-97157be529c7 rootflags=subvol=/ rw selinux=0
+```
 
-3. **Current Failure Modes:**
-   - When does black screen occur? (boot/login/random)
-   - What's in `journalctl -b -p err`?
-   - GPU driver status in `journalctl -b | grep -i gpu`
+### 6.2 Display Status
 
-4. **Peripheral Status:**
-   - Sleep/wake functionality
-   - Battery life observations
-   - Thermal behavior
+| Item | Value |
+|------|-------|
+| DRM Driver | `apple_dcp` (native, NOT SimpleDRM) |
+| GPU Driver | `asahi` (1.2MB module) |
+| Internal Display | **connected** via eDP-1 |
+| Resolution | 3024x1890 (native) |
+| HDMI | Available (card2-HDMI-A-1) |
+| Session | Wayland (GNOME) |
+
+**Black screen issue: NOT CURRENTLY PRESENT**
+Display is connected and working. Issue may be intermittent or resolved by recent kernel update.
+
+### 6.3 Loaded Apple Modules
+
+```
+apple_dcp             344064  (Display Controller)
+appledrm               49152  (DRM layer)
+asahi                1196032  (GPU)
+nvme_apple             65536  (Storage)
+spi_hid_apple          65536  (Keyboard/Trackpad)
+apple_isp             131072  (Camera ISP)
+snd_soc_apple_mca      49152  (Audio)
+```
+
+### 6.4 Boot Errors (journalctl -b -p err)
+
+| Error | Severity | Notes |
+|-------|----------|-------|
+| systemd-remount-fs failed | Low | OSTree/btrfs quirk, non-blocking |
+| spi-hid-apple timeout (-110) | Low | Keyboard init delay, recovers |
+| brcmf_dongle_roam (-52) | Low | WiFi P2P, doesn't affect normal WiFi |
+| bluetooth wake params | Low | Cosmetic |
+
+### 6.5 Installed Packages
+
+```
+kernel-16k-6.17.12-400.asahi.fc42
+mesa-dri-drivers-25.2.7-0.100.fc42
+asahi-audio-3.4-1.fc42
+asahi-fwupdate-20250130-5.fc42
+speakersafetyd (via asahi-platform-metapackage-audio)
+```
+
+### 6.6 Open Questions (Still Need Investigation)
+
+1. **Black screen trigger**: When does it occur? Cold boot? Wake from sleep? Random?
+2. **External display**: Does HDMI work?
+3. **Sleep/wake**: Does suspend work correctly?
+4. **Battery**: Runtime observations?
 
 ---
 

@@ -10,7 +10,7 @@ SUBSTRATE_HOSTS=(
     "192.168.8.114"     # LAN WiFi
     "169.254.1.2"       # Thunderbolt link-local
 )
-SUBSTRATE_USER="${SUBSTRATE_USER:-eric}"
+SUBSTRATE_USER="${SUBSTRATE_USER:-erowan}"
 SSH_OPTS="-o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new -o BatchMode=yes"
 
 # Colors
