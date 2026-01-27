@@ -24,14 +24,25 @@ build-substrate:
         --tag {{image_name}}-minimal:{{tag}} \
         .
 
-# Build substrate with GNOME OS base (BLOCKED - waiting for ARM64 support)
-# GNOME OS nightly currently only publishes x86_64 images
-# Track: https://gitlab.gnome.org/GNOME/gnome-build-meta/-/pipelines (look for aarch64 bootc)
+# Build substrate with GNOME OS base (requires gnomeos-base-aarch64 image)
+# Run 'gh workflow run build-gnomeos-base.yml' first to build the base
 build-substrate-gnomeos:
-    @echo "ERROR: GNOME OS nightly does not have ARM64 bootc images yet"
-    @echo "This target is a placeholder for when ARM64 support is added"
-    @echo "For now, use 'just build-substrate' (fedora-bootc base)"
-    @exit 1
+    @if ! podman image exists ghcr.io/{{username}}/gnomeos-base-aarch64:nightly 2>/dev/null; then \
+        echo "GNOME OS base not found locally. Pulling from registry..."; \
+        podman pull ghcr.io/{{username}}/gnomeos-base-aarch64:nightly || \
+        (echo "ERROR: GNOME OS base not available. Run: gh workflow run build-gnomeos-base.yml" && exit 1); \
+    fi
+    podman build \
+        --platform linux/arm64 \
+        --build-arg BASE_IMAGE=ghcr.io/{{username}}/gnomeos-base-aarch64:nightly \
+        -f src/Containerfile.substrate \
+        --tag {{image_name}}-gnomeos:{{tag}} \
+        .
+
+# Trigger GNOME OS base build on GitHub Actions
+build-gnomeos-base-remote:
+    gh workflow run build-gnomeos-base.yml
+    @echo "Workflow triggered. Monitor at: gh run list --workflow=build-gnomeos-base.yml"
 
 # Build both variants
 build-all: build build-substrate
