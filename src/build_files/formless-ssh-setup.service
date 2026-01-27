@@ -1,0 +1,12 @@
+[Unit]
+Description=Ensure formless user SSH keys are configured
+Before=sshd.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'mkdir -p /home/formless/.ssh && chmod 700 /home/formless/.ssh && [ -s /home/formless/.ssh/authorized_keys ] || cp /etc/skel/.ssh/authorized_keys /home/formless/.ssh/authorized_keys 2>/dev/null; chown -R formless:formless /home/formless/.ssh; chmod 600 /home/formless/.ssh/authorized_keys 2>/dev/null || true'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

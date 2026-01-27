@@ -6,8 +6,8 @@
 #   Base already includes: Asahi kernel, Mesa, audio, NetworkManager
 #   We add: SSH hardening, Tailscale, Homebrew bootstrap, formless user
 #
-# BASE: quay.io/fedora-asahi-remix-atomic-desktops/base-atomic:41
-#   - Asahi kernel (6.17.12-400.asahi.fc41.aarch64+16k)
+# BASE: quay.io/fedora-asahi-remix-atomic-desktops/base-atomic:42
+#   - Asahi kernel (6.17.12-400.asahi.fc42.aarch64+16k)
 #   - Mesa with Asahi GPU drivers
 #   - PipeWire + speakersafetyd
 #   - NetworkManager + iwd
@@ -21,7 +21,7 @@
 # =============================================================================
 # BUILD ARGUMENTS
 # =============================================================================
-ARG BASE_IMAGE="quay.io/fedora-asahi-remix-atomic-desktops/base-atomic:41"
+ARG BASE_IMAGE="quay.io/fedora-asahi-remix-atomic-desktops/base-atomic:42"
 
 # =============================================================================
 # SINGLE STAGE BUILD
@@ -65,10 +65,14 @@ RUN cat /tmp/authorized_keys.d/*.pub > /etc/skel/.ssh/authorized_keys && \
 # Tailscale auto-start service
 COPY build_files/tailscale-autostart.service /usr/lib/systemd/system/
 
+# SSH key setup service (ensures keys exist on every boot)
+COPY build_files/formless-ssh-setup.service /usr/lib/systemd/system/
+
 # Enable remote access services
 RUN systemctl enable sshd.service && \
     systemctl enable tailscaled.service && \
-    systemctl enable tailscale-autostart.service
+    systemctl enable tailscale-autostart.service && \
+    systemctl enable formless-ssh-setup.service
 
 # -----------------------------------------------------------------------------
 # 3. Audio Configuration
@@ -106,17 +110,43 @@ COPY build_files/formless-first-boot.service /usr/lib/systemd/system/
 RUN systemctl enable formless-first-boot.service
 
 # -----------------------------------------------------------------------------
-# 6. Formless Integration
+# 6. Formless User & Integration (using systemd-sysusers for bootc compatibility)
 # -----------------------------------------------------------------------------
 # Formless service definition (binary installed via Homebrew or container)
 COPY build_files/formless.service /usr/lib/systemd/system/
 
-# Create formless user (UID 1000 to match Homebrew directory ownership)
-RUN useradd -m -u 1000 -s /bin/bash -G wheel,audio,video formless 2>/dev/null || \
-    usermod -aG wheel,audio,video formless 2>/dev/null || true
+# Create formless user via systemd-sysusers (proper bootc method)
+COPY build_files/formless-user.conf /usr/lib/sysusers.d/formless.conf
+COPY build_files/formless-home.conf /usr/lib/tmpfiles.d/formless-home.conf
+
+# Run sysusers now to create user in image (for chown operations below)
+RUN systemd-sysusers /usr/lib/sysusers.d/formless.conf
+
+# Set password for console access (password: formless)
+RUN sed -i 's|^formless:!:|formless:$6$substrate$c8vEgcUeBvCy1CNHsgAYiYtJTIbSCxuuXo.Djmfq/wXD9l5ssIh0JgIaNr29VxNRjuVq.FooPu/fj.3KuGo0H1:|' /etc/shadow
+
+# Set up SSH keys for formless user
+COPY build_files/authorized_keys.d/*.pub /tmp/authorized_keys.d/
+RUN mkdir -p /var/home/formless/.ssh && \
+    chmod 700 /var/home/formless/.ssh && \
+    cat /tmp/authorized_keys.d/*.pub > /var/home/formless/.ssh/authorized_keys && \
+    chmod 600 /var/home/formless/.ssh/authorized_keys && \
+    chown -R formless:formless /var/home/formless && \
+    rm -rf /tmp/authorized_keys.d
+
+# Enable passwordless sudo for wheel group
+RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel-nopasswd && \
+    chmod 440 /etc/sudoers.d/wheel-nopasswd
 
 # -----------------------------------------------------------------------------
-# 7. Validation
+# 7. Branding - Make it clear this is Substrate
+# -----------------------------------------------------------------------------
+RUN echo 'substrate' > /etc/hostname
+RUN echo 'PRETTY_NAME="Formless Substrate (Fedora Asahi)"' > /etc/os-release.d/substrate.conf || \
+    sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="Formless Substrate (Fedora Asahi)"/' /etc/os-release
+
+# -----------------------------------------------------------------------------
+# 8. Validation
 # -----------------------------------------------------------------------------
 RUN bootc container lint || echo "Lint warnings (non-fatal)"
 

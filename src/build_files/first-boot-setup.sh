@@ -10,6 +10,32 @@ log() { logger -t "$LOG_TAG" "$1"; echo "[first-boot] $1"; }
 log "Starting Formless Substrate first boot setup..."
 
 # =============================================================================
+# 0. SSH KEY RESTORATION (in case /var persisted without keys)
+# =============================================================================
+log "Ensuring SSH keys are set up..."
+
+FORMLESS_HOME="/home/formless"
+SSH_DIR="$FORMLESS_HOME/.ssh"
+
+# Ensure .ssh directory exists with correct permissions
+mkdir -p "$SSH_DIR"
+chmod 700 "$SSH_DIR"
+
+# If authorized_keys is missing or empty, restore from /etc/skel
+if [ ! -s "$SSH_DIR/authorized_keys" ]; then
+    if [ -f /etc/skel/.ssh/authorized_keys ]; then
+        cp /etc/skel/.ssh/authorized_keys "$SSH_DIR/authorized_keys"
+        log "Restored authorized_keys from /etc/skel"
+    fi
+fi
+
+# Fix ownership
+chown -R formless:formless "$SSH_DIR"
+chmod 600 "$SSH_DIR/authorized_keys" 2>/dev/null || true
+
+log "SSH setup complete"
+
+# =============================================================================
 # 1. HOMEBREW INSTALLATION
 # =============================================================================
 log "Installing Homebrew..."

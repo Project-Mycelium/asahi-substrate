@@ -1,45 +1,31 @@
 ---
-name: Build Substrate Images
+name: Build Substrate Image
 
-# Builds both fedora-bootc (stable) and GNOME OS (substrate) variants
+# Builds Formless Substrate on Fedora Asahi Remix base
+# This is the working configuration for Apple Silicon
 
 on:
   push:
     branches: [main]
     paths:
-      - 'src/Containerfile*'
-      - 'build_files/**'
+      - 'src/**'
       - '.github/workflows/build-substrate.yml'
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      build_fedora:
-        description: 'Build fedora-bootc variant (stable)'
-        type: boolean
-        default: true
-      build_gnomeos:
-        description: 'Build GNOME OS variant (substrate)'
-        type: boolean
-        default: true
   schedule:
     - cron: '0 6 * * 1'  # 6am UTC every Monday
 
 env:
   REGISTRY: ghcr.io
-  FEDORA_IMAGE: ${{ github.repository_owner }}/asahi-substrate
-  GNOMEOS_IMAGE: ${{ github.repository_owner }}/asahi-substrate-gnomeos
-  GNOMEOS_BASE: ghcr.io/${{ github.repository_owner }}/gnomeos-base-aarch64:nightly
+  IMAGE_NAME: ${{ github.repository_owner }}/asahi-substrate
+  BASE_IMAGE: quay.io/fedora-asahi-remix-atomic-desktops/base-atomic:42
 
 jobs:
-  # ============================================================================
-  # STABLE BUILD: fedora-bootc base
-  # ============================================================================
-  build-fedora:
-    name: Build Substrate (fedora-bootc)
-    if: ${{ github.event.inputs.build_fedora != 'false' }}
+  build:
+    name: Build Formless Substrate
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     permissions:
       contents: read
@@ -51,28 +37,26 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "IMAGE_NAME=${FEDORA_IMAGE,,}" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date -u +%Y%m%d)" >> $GITHUB_ENV
 
       - name: Build substrate image
+        working-directory: src
         run: |
           podman build \
             --platform linux/arm64 \
-            --build-arg BASE_IMAGE=quay.io/fedora/fedora-bootc:43 \
-            -f src/Containerfile.substrate \
+            --build-arg BASE_IMAGE=${{ env.BASE_IMAGE }} \
+            -f Containerfile.substrate \
             --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable \
             --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_DATE }} \
             .
 
-      - name: Verify image
+      - name: Verify Asahi kernel
         run: |
           echo "=== Checking kernel ==="
           podman run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            find /usr/lib/modules -name "vmlinuz" -type f
-          echo "=== Checking initramfs ==="
+            ls /usr/lib/modules/ | head -1
           podman run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            lsinitrd 2>/dev/null | head -20 || echo "lsinitrd check complete"
+            cat /etc/hostname
 
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
@@ -86,97 +70,14 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable
           podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_DATE }}
 
       - name: Summary
         run: |
           SIZE=$(podman images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format "{{.Size}}")
-          echo "## Substrate (fedora-bootc) Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## Formless Substrate Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "**Size:** $SIZE" >> $GITHUB_STEP_SUMMARY
-          echo "**Base:** fedora-bootc:43" >> $GITHUB_STEP_SUMMARY
-
-  # ============================================================================
-  # SUBSTRATE BUILD: GNOME OS base (the real goal)
-  # ============================================================================
-  build-gnomeos:
-    name: Build Substrate (GNOME OS)
-    if: ${{ github.event.inputs.build_gnomeos != 'false' }}
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 60
-
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up environment
-        run: |
-          echo "IMAGE_NAME=${GNOMEOS_IMAGE,,}" >> $GITHUB_ENV
-          echo "BUILD_DATE=$(date -u +%Y%m%d)" >> $GITHUB_ENV
-
-      - name: Check GNOME OS base availability
-        id: check-base
-        run: |
-          if podman pull ${{ env.GNOMEOS_BASE }} 2>/dev/null; then
-            echo "base_available=true" >> $GITHUB_OUTPUT
-            echo "GNOME OS base image available"
-          else
-            echo "base_available=false" >> $GITHUB_OUTPUT
-            echo "::warning::GNOME OS base not available - run build-gnomeos-base.yml first"
-          fi
-
-      - name: Build substrate image
-        if: steps.check-base.outputs.base_available == 'true'
-        run: |
-          podman build \
-            --platform linux/arm64 \
-            --build-arg BASE_IMAGE=${{ env.GNOMEOS_BASE }} \
-            -f src/Containerfile.substrate \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:nightly \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_DATE }} \
-            .
-
-      - name: Verify image
-        if: steps.check-base.outputs.base_available == 'true'
-        run: |
-          podman run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            ls /usr/lib/modules/*/vmlinuz || echo "vmlinuz check"
-          echo "Image built successfully"
-
-      - name: Log in to GHCR
-        if: github.event_name != 'pull_request' && steps.check-base.outputs.base_available == 'true'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push image
-        if: github.event_name != 'pull_request' && steps.check-base.outputs.base_available == 'true'
-        run: |
-          podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:nightly
-          podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_DATE }}
-
-      - name: Summary
-        run: |
-          if [ "${{ steps.check-base.outputs.base_available }}" == "true" ]; then
-            SIZE=$(podman images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format "{{.Size}}" 2>/dev/null || echo "unknown")
-            echo "## Substrate (GNOME OS) Build Complete" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:nightly\`" >> $GITHUB_STEP_SUMMARY
-            echo "**Size:** $SIZE" >> $GITHUB_STEP_SUMMARY
-            echo "**Base:** GNOME OS aarch64 (independent build)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "## Substrate (GNOME OS) Build Skipped" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "GNOME OS base image not available." >> $GITHUB_STEP_SUMMARY
-            echo "Run the **Build GNOME OS Base** workflow first." >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "**Base:** Fedora Asahi Remix 42" >> $GITHUB_STEP_SUMMARY
+          echo "**Kernel:** Asahi (Apple Silicon)" >> $GITHUB_STEP_SUMMARY
