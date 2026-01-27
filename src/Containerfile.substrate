@@ -3,6 +3,20 @@
 #
 # Philosophy: Boot directly to Formless, not GNOME
 # Remote access (SSH + Tailscale) works even if display fails
+#
+# BUILD ARGS:
+#   BASE_IMAGE: Base bootc image to use
+#     - quay.io/fedora/fedora-bootc:43 (default, stable, ARM64 supported)
+#     - quay.io/gnome_infrastructure/gnome-build-meta:gnomeos-nightly (experimental, x86_64 only for now)
+#
+# USAGE:
+#   just build-substrate                           # Default: fedora-bootc
+#   podman build --build-arg BASE_IMAGE=quay.io/gnome_infrastructure/gnome-build-meta:gnomeos-nightly ...
+
+# =============================================================================
+# BUILD ARGUMENTS
+# =============================================================================
+ARG BASE_IMAGE="quay.io/fedora/fedora-bootc:43"
 
 # =============================================================================
 # STAGE 1: KERNEL EXTRACTION
@@ -25,10 +39,35 @@ RUN KVER=$(find lib/modules -maxdepth 1 -mindepth 1 -type d -printf "%f") && \
 # =============================================================================
 # STAGE 2: MINIMAL SUBSTRATE
 # =============================================================================
-FROM quay.io/fedora/fedora-bootc:43
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
 
 # -----------------------------------------------------------------------------
-# 2a. Hardware Enablement (Asahi - REQUIRED)
+# 2a. Strip Bloat from Base Image (~500MB savings)
+# fedora-bootc includes firmware/packages we don't need on Apple Silicon
+# NOTE: This step only runs if dnf is available (fedora-bootc)
+#       GNOME OS uses different package management
+# -----------------------------------------------------------------------------
+# Remove bloat: firmware (~300MB), qemu (~50MB), AWS SDK (~114MB), audio plugins (~40MB)
+# NOTE: Don't remove container tools - bootc needs them for lint
+RUN if command -v dnf &>/dev/null; then \
+        dnf remove -y --setopt=install_weak_deps=False \
+            nvidia-gpu-firmware \
+            amd-gpu-firmware \
+            atheros-firmware \
+            mt7xxx-firmware \
+            intel-gpu-firmware \
+            'qemu-user-static*' \
+            'python3-botocore*' \
+            'lsp-plugins*' \
+        || true && \
+        dnf clean all; \
+    else \
+        echo "Skipping dnf cleanup - not a Fedora-based image"; \
+    fi
+
+# -----------------------------------------------------------------------------
+# 2b. Hardware Enablement (Asahi - REQUIRED)
 # -----------------------------------------------------------------------------
 RUN dnf install -y 'dnf5-command(copr)' && \
     dnf copr enable -y @asahi/mesa && \
@@ -51,13 +90,13 @@ RUN dnf install -y 'dnf5-command(copr)' && \
     dnf clean all
 
 # -----------------------------------------------------------------------------
-# 2b. Kernel Graft
+# 2c. Kernel Graft
 # -----------------------------------------------------------------------------
 RUN rm -rf /usr/lib/modules/*
 COPY --from=extractor /payload/lib/modules /usr/lib/modules
 
 # -----------------------------------------------------------------------------
-# 2c. Remote Access Layer (SSH + Tailscale) - ALWAYS AVAILABLE
+# 2d. Remote Access Layer (SSH + Tailscale) - ALWAYS AVAILABLE
 # -----------------------------------------------------------------------------
 RUN dnf install -y --setopt=install_weak_deps=False \
         openssh-server \
@@ -86,7 +125,7 @@ COPY build_files/tailscale-autostart.service /usr/lib/systemd/system/
 RUN systemctl enable tailscale-autostart.service
 
 # -----------------------------------------------------------------------------
-# 2d. Network
+# 2e. Network
 # -----------------------------------------------------------------------------
 RUN dnf install -y --setopt=install_weak_deps=False \
         NetworkManager \
@@ -94,18 +133,18 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     dnf clean all
 
 # -----------------------------------------------------------------------------
-# 2e. Audio Hardening (prevent crackling/popping)
+# 2f. Audio Hardening (prevent crackling/popping)
 # -----------------------------------------------------------------------------
 RUN rm -f /etc/pipewire/pipewire.conf.d/99-asahi.conf
 COPY build_files/audio-fix.conf /etc/pipewire/pipewire.conf.d/99-substrate-quantum.conf
 
 # -----------------------------------------------------------------------------
-# 2f. Power Management
+# 2g. Power Management
 # -----------------------------------------------------------------------------
 COPY build_files/99-asahi-power.rules /etc/udev/rules.d/
 
 # -----------------------------------------------------------------------------
-# 2g. Initramfs Generation
+# 2h. Initramfs Generation
 # -----------------------------------------------------------------------------
 RUN echo 'add_drivers+=" nvme-apple "' > /etc/dracut.conf.d/asahi.conf && \
     echo 'hostonly="no"' >> /etc/dracut.conf.d/asahi.conf && \
@@ -117,7 +156,7 @@ RUN KVER=$(ls /usr/lib/modules | grep asahi | head -n 1) && \
     dracut --force --kver $KVER
 
 # -----------------------------------------------------------------------------
-# 2h. Validation
+# 2i. Validation
 # -----------------------------------------------------------------------------
 RUN bootc container lint
 

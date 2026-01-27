@@ -3,6 +3,10 @@ registry := "ghcr.io"
 username := `git config user.name | tr '[:upper:]' '[:lower:]' | tr -d ' '`
 tag := "latest"
 
+# Base images
+fedora_base := "quay.io/fedora/fedora-bootc:43"
+gnomeos_base := "quay.io/gnome_infrastructure/gnome-build-meta:gnomeos-nightly"
+
 # Build the v2 hybrid image (GNOME + Bluefin graft)
 build:
     podman build \
@@ -11,13 +15,23 @@ build:
         --tag {{image_name}}:{{tag}} \
         .
 
-# Build the v3 minimal substrate (no desktop, SSH+Tailscale baked in)
+# Build the v3 minimal substrate (fedora-bootc base, ARM64)
 build-substrate:
     podman build \
         --platform linux/arm64 \
+        --build-arg BASE_IMAGE={{fedora_base}} \
         -f src/Containerfile.substrate \
         --tag {{image_name}}-minimal:{{tag}} \
         .
+
+# Build substrate with GNOME OS base (BLOCKED - waiting for ARM64 support)
+# GNOME OS nightly currently only publishes x86_64 images
+# Track: https://gitlab.gnome.org/GNOME/gnome-build-meta/-/pipelines (look for aarch64 bootc)
+build-substrate-gnomeos:
+    @echo "ERROR: GNOME OS nightly does not have ARM64 bootc images yet"
+    @echo "This target is a placeholder for when ARM64 support is added"
+    @echo "For now, use 'just build-substrate' (fedora-bootc base)"
+    @exit 1
 
 # Build both variants
 build-all: build build-substrate
