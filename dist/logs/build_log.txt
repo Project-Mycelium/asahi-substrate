@@ -1,0 +1,682 @@
+podman build --platform linux/arm64 --tag asahi-substrate:latest .
+[1/2] STEP 1/7: FROM quay.io/fedora/fedora:41 AS extractor
+[1/2] STEP 2/7: RUN dnf install -y 'dnf5-command(copr)' cpio findutils
+--> Using cache 0db6a2b1f1f9b411d64d3c27575c809a26dae28f0ba7cb754c8c11317b7d42b1
+--> 0db6a2b1f1f9
+[1/2] STEP 3/7: RUN dnf copr enable -y @asahi/kernel
+--> Using cache ce5783a0e9cc25a59075c71fea8d986728c88b6119a31aa2ddffcf51b8854b93
+--> ce5783a0e9cc
+[1/2] STEP 4/7: WORKDIR /payload
+--> Using cache 284d0ab37eb17abbef887ce59c80058a757908511e0c6e5645a8e56bf07ae110
+--> 284d0ab37eb1
+[1/2] STEP 5/7: RUN dnf download --resolve kernel-16k
+--> Using cache 0afefada4d5926c1f8e4e04918ac6a82fb806c3c006e9c91b09f1e6349442475
+--> 0afefada4d59
+[1/2] STEP 6/7: RUN for rpm in *.rpm; do rpm2cpio "$rpm" | cpio -idm; done
+--> Using cache a59a010551c6cc0e0866b93b6e4ce3e62d169b0782d2323fd36a7c9d945517c0
+--> a59a010551c6
+[1/2] STEP 7/7: RUN KVER=$(find lib/modules -maxdepth 1 -mindepth 1 -type d -printf "%f") &&     if [ ! -f lib/modules/$KVER/vmlinuz ]; then         cp boot/vmlinuz-* lib/modules/$KVER/vmlinuz;     fi
+--> Using cache 77ac9b44f7ffb5ddbd2d87cbfc577f6010abbb2e2db53ae1cb0551f6b4acf4cb
+--> 77ac9b44f7ff
+[2/2] STEP 1/25: FROM quay.io/fedora/fedora-bootc:43
+Trying to pull quay.io/fedora/fedora-bootc:43...
+Getting image source signatures
+Copying blob sha256:936bac22081efe0485d78e1949da5ddedfb2df18bb3d7432ead421ac69417f9f
+Copying blob sha256:9c49d63a601a698c54594d77b318ee6ee1fbde39c486fc61ccd96598fbff5fd0
+Copying blob sha256:dccef2215b1655e63fa84cf6766de9fe3c475e3d61c281eb796aa4bc23b631e0
+Copying blob sha256:3550ab9d3bfa8e48dc76e7d4f22b6635bb43ac5ea172303a77f29efbc18eefc2
+Copying blob sha256:e41ce96b32bfc2640019d641521971b36634b02ee72f1e5ebf70c0a4d344a339
+Copying blob sha256:e9e7f63b8561433399e1c4e4c4670fac51295a954bf4bea96d3108d541b043e2
+Copying blob sha256:f42196fb5de1b59c6b330fd49ab6e30d0beba0c4a0ec2098e7c80f635eb94ea7
+Copying blob sha256:8cc0560605847f171d5b50711274b3d07eb2819ce133722693440fc7ac4ab84b
+Copying blob sha256:591f751f02ee4fc1215c1315abab12b3d84e6b7db13371acff968c36248f680b
+Copying blob sha256:fdcfea6f0d8fba92fe093967e7613c53eee0881311b84d4968ece5ae08819d3d
+Copying blob sha256:d98efc5f9e97e1075f767f9f9eb0e6d342adc672a41de62078b5e1cfd6881fbc
+Copying blob sha256:8c0ebae9130d59f6460000a6a7ce993fada9f554d9a811436345d9055353791d
+Copying blob sha256:a79b33da76398475ef8de1d4ea5dc08dc5f5867d2b78ff92e9b8869d38dfbe13
+Copying blob sha256:e2e159c219d9c7a2046222df132081cf773617823f12e738ad68bf0dfe0ff8d7
+Copying blob sha256:ed71ee4c73489eff572d05430180a2d5272438fc5d9c944e4a2b04a2da539b20
+Copying blob sha256:72c01f83971772654748bf3241d2de103c6b93ea0b9e075558aeb10fd5e2ebb6
+Copying blob sha256:428c56be26ba074e3fdb81330aff27d09e6bcfaa808f2f6f347a2f46617071d2
+Copying blob sha256:3faae505eb7bb4cb69343ea50216a70f9e8f1f78c4c071b1895090e293c2a703
+Copying blob sha256:1f6d66727cb92c79859b3fcc384d4992160241a6db77aece8ca8d5404ead7eb6
+Copying blob sha256:637e3c768fda6971c424011712fec36755c681f7c18deb7736868d21a653aee6
+Copying blob sha256:5f7bdf058af10ce7782d337b838758eafbe2dca5b8fbe325bfb680b08ee0483f
+Copying blob sha256:9ec38acb42135b3fb1fafc8a0dfea275cdd7e7a42435fb2da797d61ff5b67035
+Copying blob sha256:7306033d102f15bcf25ebb53eee38095ba3526e5fa94e174a2f4ac1702710175
+Copying blob sha256:f42e119314d4883e5f0a06a6b5522d6ddd261d06a38236884b6b651cca8e2ab5
+Copying blob sha256:dfb87bd8e77125408ce8ec37a5a6adda1eb86c713cb4e2472c7ab48af045e03d
+Copying blob sha256:83dfa3d33f9cfb41643acca20b00e6699a6d097860648566a8421e1c99f5943f
+Copying blob sha256:dcbf87685c7c19b53725b41865a81624a65191311e6fb2689db3e554a2f46543
+Copying blob sha256:2bbfb09068929dc9cc2f895638ccd2e47f3931c1d75b32f82024b24a04af6d9f
+Copying blob sha256:0147a837585a32f3cdad12511c9510b341a55654be5c8043cb20b6b599148925
+Copying blob sha256:73f2c56d5f27d792268ee24063ec21d5719be64bf54351e2d5475c6dc25f6714
+Copying blob sha256:e55241d36b6e9fc036fd344a54dd930e5e7cf17f5ca75320a4c89d4f46181e71
+Copying blob sha256:4ef11ba2b7f7ef0ab302126aa1fb2085b676f63d237a24034679868a9241b258
+Copying blob sha256:69307de27910d12071035fa8b0d60c3089112bcead3627da7e0851a3aea368f8
+Copying blob sha256:9e441463d0e8e8086a08c3b4ce6c7ca797c77777868ab5d3db65324d30a51e5b
+Copying blob sha256:e56e39323900df4e24472cf4451f0b7be5df94682668729ecfbbc7c9aea86469
+Copying blob sha256:7443760b43ec673be6cb62979cc386356bbd1d0acb83b6b2961cacba61e5ba10
+Copying blob sha256:88fe0521cbcd95614b146befcd386ec8ec8e7f72972f3d8cbfa3fd80c7a28f0b
+Copying blob sha256:6da72059c111eaa00725d48960fd58af176e471856f0c28f283387177e13ac78
+Copying blob sha256:18abc75a17286df52b724a752038b2ef6b91fc717d8e288d609d70142b6a9597
+Copying blob sha256:f5768915a10f9daf702aac16895823383604b1f3dea0da236a79e218a6a2face
+Copying blob sha256:d318283568392cfe83fa566fa1ef0c6a02e84d093c107cf5e191a505c24201c7
+Copying blob sha256:573cc58cfb673d5ac59aa79c08fccd1574e8a3ebe1f676e20440bb7053d6beb7
+Copying blob sha256:1b44783eff8caca532e31360b56c95588b4295b4fd4e008a0d4409fa7b97aa8e
+Copying blob sha256:8fe854b4dca3f8b1cf56374d23eb187345c7b338c322f429b2ad4f9ac1b39cef
+Copying blob sha256:29a94599e687d705f940261f174ac273bcce03923f2e691b0306018296281b1f
+Copying blob sha256:7ce701b30f3cebc0b370d1e92451c625f83aab0c17b0ba249e3db7df3e995789
+Copying blob sha256:1d6d2bad66318e400b118d717d138406091d5e13b735d3d71876b6076f0eba29
+Copying blob sha256:463b9d38e611a7e211a58cbae4717cf3441b5dcca8bf7579760acdd89c798f1d
+Copying blob sha256:e621f7697f945458e74bce558774ddc257ad909b353cf90a6119341903da9bee
+Copying blob sha256:4e4c50f355e160da3e1e38cddffdceb8431fe716096348c33cb16da427fd377a
+Copying blob sha256:1b98b46de7a30cf1b6d98fabcb3ada75746f56c69a3a62571401a1e986a73dbc
+Copying blob sha256:24cc27cc1cfa173565803edd03f06ae22a527855a29f69a009de28f0f81e08db
+Copying blob sha256:f0c3ba55f9e40f631000149ed1ea302b22419290eeeb6458150446d3ecd6380e
+Copying blob sha256:94de5e26b4481344d3aed689676bc50b4f2f4bc958d4cdc610205eb7aa32f7a5
+Copying blob sha256:f0df1297e4f1926c219fb9bbcc37bd845748dd278f0664345d948977657c7300
+Copying blob sha256:86a35b3647f5839068e50813adefdfc4bc9a2f033f0dc4dadc4bd9eee7031305
+Copying blob sha256:99806805f79207d0ddc881db73de178038e196fe72635f53db1758065ce4832a
+Copying blob sha256:bdbe943ab8dfd4276641eb332e8b52173ac9a3c9f9c63a86512d6ec882b73362
+Copying blob sha256:d442507a607dd9d1e01f6dbaea7ed6cb308da0abac9c3185f3de48e3946f4986
+Copying blob sha256:e9ae488d5e2b1165663ad991c19277c769fcee9ad20e69cb9f32a397e9caba3a
+Copying blob sha256:e633437df2c523b0f428211b942b5a6afd856d12e977bb448daccc56670c6577
+Copying blob sha256:4df4fe8c1895a22ca9c116047a581c7d0e1628a7fa299ed9aec40e784d570b3f
+Copying blob sha256:042b8d7d076e8d6dd77983d551dc880b10145b7e87527b759fa0efe7232967fc
+Copying blob sha256:b6de0bfa0b287716db47f30526853adc704141ad4ead0be6473c6c0453525e88
+Copying blob sha256:9dad063a624b62064bf25dbbc2e802e472d636056f661f2a0be73efd8a4da98b
+Copying config sha256:ca8d9d114d528f22709808c34acec21423a9c6c96c7c823bf872e92b1305f452
+Writing manifest to image destination
+[2/2] STEP 2/25: RUN dnf install -y 'dnf5-command(copr)' &&     dnf copr enable -y @asahi/mesa &&     dnf install -y --setopt=install_weak_deps=False     mesa-dri-drivers asahi-fwupdate asahi-bless asahi-audio alsa-ucm-asahi     asahi-scripts m1n1 dracut-asahi unzip muvm &&     dnf clean all
+Updating and loading repositories:
+ Fedora 43 openh264 (From Cisco) - aarc 100% |   4.4 KiB/s |   5.8 KiB |  00m01s
+ Fedora 43 - aarch64 - Updates Archive  100% |   8.4 MiB/s |  16.5 MiB |  00m02s
+ Fedora 43 - aarch64                    100% |  10.4 MiB/s |  63.4 MiB |  00m06s
+ Fedora 43 - aarch64 - Updates          100% |   1.2 MiB/s |   7.8 MiB |  00m07s
+Repositories loaded.
+Total size of inbound packages is 447 KiB. Need to download 447 KiB.
+After this operation, 1 MiB extra will be used (install 1 MiB, remove 0 B).
+Package       Arch    Version         Repository      Size
+Installing:
+ dnf5-plugins aarch64 5.2.17.0-2.fc43 fedora       1.4 MiB
+
+Transaction Summary:
+ Installing:         1 package
+
+[1/1] dnf5-plugins-0:5.2.17.0-2.fc43.aa 100% |   1.7 MiB/s | 446.7 KiB |  00m00s
+--------------------------------------------------------------------------------
+[1/1] Total                             100% |   1.7 MiB/s | 446.7 KiB |  00m00s
+Running transaction
+Importing OpenPGP key 0x31645531:
+ UserID     : "Fedora (43) <fedora-43-primary@fedoraproject.org>"
+ Fingerprint: C6E7F081CF80E13146676E88829B606631645531
+ From       : file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-43-aarch64
+The key was successfully imported.
+[1/3] Verify package files              100% |   0.0   B/s |   1.0   B |  00m00s
+[2/3] Prepare transaction               100% |  33.0   B/s |   1.0   B |  00m00s
+[3/3] Installing dnf5-plugins-0:5.2.17. 100% |  13.4 MiB/s |   1.4 MiB |  00m00s
+Complete!
+ https://copr.fedorainfracloud.org/api_ 100% |   3.3 KiB/s | 719.0   B |  00m00s
+Enabling a Copr repository. Please note that this repository is not part
+of the main distribution, and quality may vary.
+
+The Fedora Project does not exercise any power over the contents of
+this repository beyond the rules outlined in the Copr FAQ at
+<https://docs.pagure.org/copr.copr/user_documentation.html#what-i-can-build-in-copr>,
+and packages are not held to any quality or security level.
+
+Please do not file bug reports about these packages in Fedora
+Bugzilla. In case of problems, contact the owner of this repository.
+Updating and loading repositories:
+ Copr repo for mesa owned by @asahi     100% |  79.9 KiB/s |  16.5 KiB |  00m00s
+Repositories loaded.
+Package                           Arch    Version          Repository      Size
+Installing:
+ alsa-ucm-asahi                   noarch  8-2.fc43         fedora      10.2 KiB
+ asahi-audio                      noarch  3.4-3.fc43       fedora       2.0 MiB
+ asahi-bless                      aarch64 0.4.2-2.fc43     fedora     936.9 KiB
+ asahi-fwupdate                   noarch  20250713-5.fc43  fedora       2.1 KiB
+ asahi-scripts                    noarch  20250713-5.fc43  fedora      13.2 KiB
+ dracut-asahi                     noarch  20250713-5.fc43  fedora       5.1 KiB
+ m1n1                             aarch64 1.5.2-1.fc43     updates      3.0 MiB
+ mesa-dri-drivers                 aarch64 25.2.7-3.fc43    updates     35.5 MiB
+ muvm                             aarch64 0.4.1-2.fc43     fedora       2.9 MiB
+ unzip                            aarch64 6.0-67.fc43      fedora     470.2 KiB
+Installing dependencies:
+ abattis-cantarell-vf-fonts       noarch  0.301-15.fc43    fedora     192.7 KiB
+ alsa-lib                         aarch64 1.2.15.1-1.fc43  updates      1.5 MiB
+ alsa-ucm                         noarch  1.2.15.1-1.fc43  updates    626.7 KiB
+ bluez-libs                       aarch64 5.85-1.fc43      updates    278.5 KiB
+ cairo                            aarch64 1.18.4-2.fc43    fedora       1.8 MiB
+ default-fonts-core-sans          noarch  4.2-5.fc43       fedora      11.9 KiB
+ fdk-aac-free                     aarch64 2.0.0-16.fc43    fedora     591.2 KiB
+ fftw-libs-single                 aarch64 3.3.10-16.fc43   fedora       1.9 MiB
+ flac-libs                        aarch64 1.5.0-5.fc43     updates    555.3 KiB
+ fontconfig                       aarch64 2.17.0-3.fc43    fedora       1.2 MiB
+ freetype                         aarch64 2.13.3-3.fc43    fedora     814.5 KiB
+ google-noto-fonts-common         noarch  20251101-2.fc43  updates     17.7 KiB
+ google-noto-sans-vf-fonts        noarch  20251101-2.fc43  updates      1.4 MiB
+ graphite2                        aarch64 1.3.14-19.fc43   fedora     239.6 KiB
+ gsm                              aarch64 1.0.23-1.fc43    fedora      77.2 KiB
+ harfbuzz                         aarch64 11.5.1-1.fc43    fedora       2.7 MiB
+ lame-libs                        aarch64 3.100-20.fc43    fedora       1.2 MiB
+ libX11                           aarch64 1.8.12-1.fc43    fedora       1.3 MiB
+ libX11-common                    noarch  1.8.12-1.fc43    fedora       1.2 MiB
+ libX11-xcb                       aarch64 1.8.12-1.fc43    fedora      67.0 KiB
+ libXau                           aarch64 1.0.12-3.fc43    fedora     121.0 KiB
+ libXext                          aarch64 1.3.6-4.fc43     fedora     145.9 KiB
+ libXfixes                        aarch64 6.0.1-6.fc43     fedora      70.3 KiB
+ libXrandr                        aarch64 1.5.4-6.fc43     fedora      71.7 KiB
+ libXrender                       aarch64 0.9.12-3.fc43    fedora      70.0 KiB
+ libXxf86vm                       aarch64 1.1.6-3.fc43     fedora      69.3 KiB
+ libasyncns                       aarch64 0.8-31.fc43      fedora      99.4 KiB
+ libebur128                       aarch64 1.2.6-14.fc43    fedora      71.4 KiB
+ libepoxy                         aarch64 1.5.10-11.fc43   fedora       1.2 MiB
+ libglvnd                         aarch64 1:1.7.0-8.fc43   fedora       1.3 MiB
+ libglvnd-glx                     aarch64 1:1.7.0-8.fc43   fedora       1.0 MiB
+ libkrun                          aarch64 1.15.1-1.fc43    fedora       6.7 MiB
+ libkrunfw                        aarch64 4.10.0-2.fc43    fedora      20.9 MiB
+ liblc3                           aarch64 1.1.3-5.fc43     fedora     206.9 KiB
+ libldac                          aarch64 2.0.2.3-18.fc43  fedora     146.3 KiB
+ libogg                           aarch64 2:1.3.6-2.fc43   updates     77.7 KiB
+ libpng                           aarch64 2:1.6.53-1.fc43  updates    269.9 KiB
+ libsbc                           aarch64 2.0-7.fc43       fedora      85.3 KiB
+ libsndfile                       aarch64 1.2.2-10.fc43    fedora     562.1 KiB
+ libva                            aarch64 2.22.0-6.fc43    Total size of inbound packages is 82 MiB. Need to download 82 MiB.
+After this operation, 301 MiB extra will be used (install 301 MiB, remove 0 B).
+fedora     557.6 KiB
+ libvorbis                        aarch64 1:1.3.7-13.fc43  fedora     845.6 KiB
+ libwayland-client                aarch64 1.24.0-1.fc43    fedora      70.1 KiB
+ libxcb                           aarch64 1.17.0-6.fc43    fedora       2.2 MiB
+ libxshmfence                     aarch64 1.3.2-7.fc43     fedora      68.5 KiB
+ lilv-libs                        aarch64 0.24.26-7.fc43   fedora     147.5 KiB
+ linux-firmware-vendor            noarch  20250713-5.fc43  fedora       1.1 KiB
+ llvm-filesystem                  aarch64 21.1.7-1.fc43    updates      0.0   B
+ llvm-libs                        aarch64 21.1.7-1.fc43    updates    132.9 MiB
+ lm_sensors-libs                  aarch64 3.6.0-23.fc43    fedora      93.8 KiB
+ lsp-plugins-lv2                  aarch64 1.2.26-1.fc43    updates     38.9 MiB
+ lv2                              aarch64 1.18.10-3.fc43   fedora     334.8 KiB
+ lv2-bankstown                    aarch64 1.1.0-5.fc43     fedora     347.3 KiB
+ lv2-triforce                     aarch64 0.3.2-2.fc43     fedora     759.9 KiB
+ lzfse-libs                       aarch64 1.0-8.fc43       fedora      68.9 KiB
+ mesa-filesystem                  aarch64 25.2.7-3.fc43    updates      3.6 KiB
+ mesa-libGL                       aarch64 25.2.7-3.fc43    updates    333.9 KiB
+ mesa-libgbm                      aarch64 25.2.7-3.fc43    updates     67.8 KiB
+ mpg123-libs                      aarch64 1.32.10-2.fc43   fedora     754.4 KiB
+ opus                             aarch64 1.5.2-3.fc43     fedora     391.7 KiB
+ pipewire                         aarch64 1.4.9-1.fc43     updates    482.9 KiB
+ pipewire-libs                    aarch64 1.4.9-1.fc43     updates     10.2 MiB
+ pipewire-module-filter-chain-lv2 aarch64 1.4.9-1.fc43     updates     67.6 KiB
+ pixman                           aarch64 0.46.2-2.fc43    fedora     654.5 KiB
+ pulseaudio-libs                  aarch64 17.0-7.fc43      fedora       3.4 MiB
+ python3-asahi_firmware           aarch64 0.7.9-4.fc43     fedora     121.3 KiB
+ python3-asn1                     noarch  2.7.0-8.fc43     fedora      96.3 KiB
+ rtkit                            aarch64 0.11-69.fc43     fedora     198.1 KiB
+ serd                             aarch64 0.32.4-2.fc43    fedora     219.0 KiB
+ sord                             aarch64 0.16.18-2.fc43   fedora     205.7 KiB
+ spirv-tools-libs                 aarch64 2025.4-1.fc43    updates      5.4 MiB
+ sratom                           aarch64 0.6.18-2.fc43    fedora      68.7 KiB
+ virglrenderer                    aarch64 1.2.0-2.fc43     fedora       1.3 MiB
+ vulkan-loader                    aarch64 1.4.328.1-1.fc43 updates    612.4 KiB
+ webrtc-audio-processing          aarch64 1.3-9.fc43       fedora       1.3 MiB
+ wireplumber                      aarch64 0.5.12-1.fc43    updates    508.2 KiB
+ wireplumber-libs                 aarch64 0.5.12-1.fc43    updates      1.9 MiB
+ xml-common                       noarch  0.6.3-67.fc43    fedora      78.4 KiB
+ zix                              aarch64 0.6.2-2.fc43     fedora      70.8 KiB
+
+Transaction Summary:
+ Installing:        88 packages
+
+[ 1/88] asahi-fwupdate-0:20250713-5.fc4 100% |  68.2 KiB/s |  12.5 KiB |  00m00s
+[ 2/88] alsa-ucm-asahi-0:8-2.fc43.noarc 100% | 518.8 KiB/s |  21.8 KiB |  00m00s
+[ 3/88] asahi-scripts-0:20250713-5.fc43 100% | 498.7 KiB/s |  16.0 KiB |  00m00s
+[ 4/88] dracut-asahi-0:20250713-5.fc43. 100% | 312.4 KiB/s |  14.1 KiB |  00m00s
+[ 5/88] asahi-bless-0:0.4.2-2.fc43.aarc 100% |   1.2 MiB/s | 408.0 KiB |  00m00s
+[ 6/88] unzip-0:6.0-67.fc43.aarch64     100% |   1.6 MiB/s | 185.4 KiB |  00m00s
+[ 7/88] asahi-audio-0:3.4-3.fc43.noarch 100% |   3.4 MiB/s |   1.8 MiB |  00m01s
+[ 8/88] muvm-0:0.4.1-2.fc43.aarch64     100% |   3.7 MiB/s | 929.6 KiB |  00m00s
+[ 9/88] python3-asahi_firmware-0:0.7.9- 100% | 350.3 KiB/s |  55.0 KiB |  00m00s
+[10/88] linux-firmware-vendor-0:2025071 100% | 238.0 KiB/s |  11.4 KiB |  00m00s
+[11/88] lv2-bankstown-0:1.1.0-5.fc43.aa 100% |   1.6 MiB/s | 174.8 KiB |  00m00s
+[12/88] lv2-triforce-0:0.3.2-2.fc43.aar 100% |   3.5 MiB/s | 374.4 KiB |  00m00s
+[13/88] lzfse-libs-0:1.0-8.fc43.aarch64 100% | 411.2 KiB/s |  24.7 KiB |  00m00s
+[14/88] python3-asn1-0:2.7.0-8.fc43.noa 100% | 124.7 KiB/s |  28.7 KiB |  00m00s
+[15/88] libkrun-0:1.15.1-1.fc43.aarch64 100% |   6.1 MiB/s |   2.4 MiB |  00m00s
+[16/88] lv2-0:1.18.10-3.fc43.aarch64    100% | 295.9 KiB/s | 100.6 KiB |  00m00s
+[17/88] libX11-xcb-0:1.8.12-1.fc43.aarc 100% |  55.5 KiB/s |  11.7 KiB |  00m00s
+[18/88] libxcb-0:1.17.0-6.fc43.aarch64  100% | 352.4 KiB/s | 242.1 KiB |  00m01s
+[19/88] libxshmfence-0:1.3.2-7.fc43.aar 100% |  42.9 KiB/s |  13.5 KiB |  00m00s
+[20/88] lm_sensors-libs-0:3.6.0-23.fc43 100% | 184.3 KiB/s |  40.5 KiB |  00m00s
+[21/88] mesa-dri-drivers-0:25.2.7-3.fc4 100% |   6.1 MiB/s |   9.7 MiB |  00m02s
+[22/88] libXau-0:1.0.12-3.fc43.aarch64  100% | 180.9 KiB/s |  33.6 KiB |  00m00s
+[23/88] m1n1-0:1.5.2-1.fc43.aarch64     100% |   2.5 MiB/s | 191.6 KiB |  00m00s
+[24/88] libkrunfw-0:4.10.0-2.fc43.aarch 100% |   4.9 MiB/s |  10.5 MiB |  00m02s
+[25/88] fdk-aac-free-0:2.0.0-16.fc43.aa 100% | 709.5 KiB/s | 322.8 KiB |  00m00s
+[26/88] pipewire-libs-0:1.4.9-1.fc43.aa 100% |   4.6 MiB/s |   2.3 MiB |  00m00s
+[27/88] libebur128-0:1.2.6-14.fc43.aarc 100% | 738.5 KiB/s |  24.4 KiB |  00m00s
+[28/88] fftw-libs-single-0:3.3.10-16.fc 100% |   2.5 MiB/s | 698.4 KiB |  00m00s
+[29/88] libldac-0:2.0.2.3-18.fc43.aarch 100% | 217.3 KiB/s |  41.5 KiB |  00m00s
+[30/88] libsbc-0:2.0-7.fc43.aarch64     100% |   1.0 MiB/s |  44.7 KiB |  00m00s
+[31/88] liblc3-0:1.1.3-5.fc43.aarch64   100% | 418.8 KiB/s | 101.8 KiB |  00m00s
+[32/88] libsndfile-0:1.2.2-10.fc43.aarc 100% |   1.8 MiB/s | 217.2 KiB |  00m00s
+[33/88] opus-0:1.5.2-3.fc43.aarch64     100% |   1.6 MiB/s | 238.2 KiB |  00m00s
+[34/88] pulseaudio-libs-0:17.0-7.fc43.a 100% |   2.2 MiB/s | 669.3 KiB |  00m00s
+[35/88] gsm-0:1.0.23-1.fc43.aarch64     100% | 195.2 KiB/s |  35.1 KiB |  00m00s
+[36/88] webrtc-audio-processing-0:1.3-9 100% |   1.4 MiB/s | 490.4 KiB |  00m00s
+[37/88] lame-libs-0:3.100-20.fc43.aarch 100% |   1.4 MiB/s | 336.0 KiB |  00m00s
+[38/88] libvorbis-1:1.3.7-13.fc43.aarch 100% | 750.3 KiB/s | 183.8 KiB |  00m00s
+[39/88] libasyncns-0:0.8-31.fc43.aarch6 100% | 565.2 KiB/s |  29.4 KiB |  00m00s
+[40/88] mpg123-libs-0:1.32.10-2.fc43.aa 100% |   1.7 MiB/s | 357.2 KiB |  00m00s
+[41/88] virglrenderer-0:1.2.0-2.fc43.aa 100% |   2.0 MiB/s | 428.1 KiB |  00m00s
+[42/88] libX11-0:1.8.12-1.fc43.aarch64  100% |   1.9 MiB/s | 645.4 KiB |  00m00s
+[43/88] libepoxy-0:1.5.10-11.fc43.aarch 100% | 794.0 KiB/s | 240.6 KiB |  00m00s
+[44/88] libXext-0:1.3.6-4.fc43.aarch64  100% |   1.0 MiB/s |  38.4 KiB |  00m00s
+[45/88] libva-0:2.22.0-6.fc43.aarch64   100% | 535.5 KiB/s | 115.7 KiB |  00m00s
+[46/88] libX11-common-0:1.8.12-1.fc43.n 100% |   1.5 MiB/s | 175.9 KiB |  00m00s
+[47/88] libXfixes-0:6.0.1-6.fc43.aarch6 100% | 507.5 KiB/s |  19.3 KiB |  00m00s
+[48/88] libwayland-client-0:1.24.0-1.fc 100% | 985.2 KiB/s |  32.5 KiB |  00m00s
+[49/88] libglvnd-glx-1:1.7.0-8.fc43.aar 100% |   1.3 MiB/s | 129.3 KiB |  00m00s
+[50/88] libglvnd-1:1.7.0-8.fc43.aarch64 100% |   1.6 MiB/s | 108.5 KiB |  00m00s
+[51/88] libXxf86vm-0:1.1.6-3.fc43.aarch 100% | 566.7 KiB/s |  17.6 KiB |  00m00s
+[52/88] mesa-libGL-0:25.2.7-3.fc43.aarc 100% | 913.8 KiB/s | 129.8 KiB |  00m00s
+[53/88] cairo-0:1.18.4-2.fc43.aarch64   100% |   3.4 MiB/s | 699.1 KiB |  00m00s
+[54/88] fontconfig-0:2.17.0-3.fc43.aarc 100% |   1.2 MiB/s | 274.5 KiB |  00m00s
+[55/88] freetype-0:2.13.3-3.fc43.aarch6 100% |   1.9 MiB/s | 402.0 KiB |  00m00s
+[56/88] libXrandr-0:1.5.4-6.fc43.aarch6 100% | 246.3 KiB/s |  27.1 KiB |  00m00s
+[57/88] libXrender-0:0.9.12-3.fc43.aarc 100% | 728.4 KiB/s |  27.0 KiB |  00m00s
+[58/88] pixman-0:0.46.2-2.fc43.aarch64  100% |   1.9 MiB/s | 213.2 KiB |  00m00s
+[59/88] default-fonts-core-sans-0:4.2-5 100% | 369.1 KiB/s |  29.9 KiB |  00m00s
+[60/88] xml-common-0:0.6.3-67.fc43.noar 100% | 796.1 KiB/s |  31.0 KiB |  00m00s
+[61/88] lsp-plugins-lv2-0:1.2.26-1.fc43 100% |   7.3 MiB/s |   6.2 MiB |  00m01s
+[62/88] harfbuzz-0:11.5.1-1.fc43.aarch6 100% |   3.2 MiB/s |   1.1 MiB |  00m00s
+[63/88] abattis-cantarell-vf-fonts-0:0. 100% | 365.2 KiB/s | 120.1 KiB |  00m00s
+[64/88] graphite2-0:1.3.14-19.fc43.aarc 100% |   1.0 MiB/s |  91.7 KiB |  00m00s
+[65/88] rtkit-0:0.11-69.fc43.aarch64    100% |   1.6 MiB/s |  54.5 KiB |  00m00s
+[66/88] lilv-libs-0:0.24.26-7.fc43.aarc 100% |   1.5 MiB/s |  52.2 KiB |  00m00s
+[67/88] pipewire-module-filter-chain-lv 100% | 394.1 KiB/s |  20.1 KiB |  00m00s
+[68/88] serd-0:0.32.4-2.fc43.aarch64    100% |   1.8 MiB/s |  63.9 KiB |  00m00s
+[69/88] pipewire-0:1.4.9-1.fc43.aarch64 100% | 844.7 KiB/s | 135.1 KiB |  00m00s
+[70/88] sord-0:0.16.18-2.fc43.aarch64   100% | 738.1 KiB/s |  37.6 KiB |  00m00s
+[71/88] sratom-0:0.6.18-2.fc43.aarch64  100% | 749.1 KiB/s |  23.2 KiB |  00m00s
+[72/88] zix-0:0.6.2-2.fc43.aarch64      100% | 984.1 KiB/s |  34.4 KiB |  00m00s
+[73/88] wireplumber-0:0.5.12-1.fc43.aar 100% |   2.1 MiB/s | 117.7 KiB |  00m00s
+[74/88] alsa-lib-0:1.2.15.1-1.fc43.aarc 100% |   2.2 MiB/s | 516.4 KiB |  00m00s
+[75/88] wireplumber-libs-0:0.5.12-1.fc4 100% |   1.4 MiB/s | 404.3 KiB |  00m00s
+[76/88] bluez-libs-0:5.85-1.fc43.aarch6 100% |   2.0 MiB/s |  90.1 KiB |  00m00s
+[77/88] alsa-ucm-0:1.2.15.1-1.fc43.noar 100% | 600.8 KiB/s | 320.8 KiB |  00m01s
+[78/88] mesa-filesystem-0:25.2.7-3.fc43 100% |  73.8 KiB/s |  21.6 KiB |  00m00s
+[79/88] mesa-libgbm-0:25.2.7-3.fc43.aar 100% | 221.3 KiB/s |  28.1 KiB |  00m00s
+[80/88] llvm-filesystem-0:21.1.7-1.fc43 100% | 269.3 KiB/s |  14.5 KiB |  00m00s
+[81/88] vulkan-loader-0:1.4.328.1-1.fc4 100% |   1.1 MiB/s | 169.0 KiB |  00m00s
+[82/88] libogg-2:1.3.6-2.fc43.aarch64   100% | 856.9 KiB/s |  33.4 KiB |  00m00s
+[83/88] flac-libs-0:1.5.0-5.fc43.aarch6 100% |   3.7 MiB/s | 191.8 KiB |  00m00s
+[84/88] libpng-2:1.6.53-1.fc43.aarch64  100% |   2.5 MiB/s | 117.2 KiB |  00m00s
+[85/88] google-noto-sans-vf-fonts-0:202 100% |   4.7 MiB/s | 614.5 KiB |  00m00s
+[86/88] google-noto-fonts-common-0:2025 100% | 480.9 KiB/s |  17.3 KiB |  00m00s
+[87/88] spirv-tools-libs-0:2025.4-1.fc4 100% |   2.2 MiB/s |   1.5 MiB |  00m01s
+[88/88] llvm-libs-0:21.1.7-1.fc43.aarch 100% |   6.4 MiB/s |  33.3 MiB |  00m05s
+--------------------------------------------------------------------------------
+[88/88] Total                           100% |   7.1 MiB/s |  82.3 MiB |  00m12s
+Running transaction
+[ 1/90] Verify package files            100% | 666.0   B/s |  88.0   B |  00m00s
+[ 2/90] Prepare transaction             100% |   1.9 KiB/s |  88.0   B |  00m00s
+[ 3/90] Installing libogg-2:1.3.6-2.fc4 100% |  77.3 MiB/s |  79.2 KiB |  00m00s
+[ 4/90] Installing serd-0:0.32.4-2.fc43 100% |  21.6 MiB/s | 221.2 KiB |  00m00s
+[ 5/90] Installing libX11-xcb-0:1.8.12- 100% |  66.2 MiB/s |  67.8 KiB |  00m00s
+[ 6/90] Installing lv2-0:1.18.10-3.fc43 100% |  85.8 MiB/s | 351.5 KiB |  00m00s
+[ 7/90] Installing libpng-2:1.6.53-1.fc 100% | 264.8 MiB/s | 271.1 KiB |  00m00s
+[ 8/90] Installing mesa-filesystem-0:25 100% |   0.0   B/s |   4.3 KiB |  00m00s
+[ 9/90] Installing alsa-lib-0:1.2.15.1- 100% | 110.5 MiB/s |   1.5 MiB |  00m00s
+[10/90] Installing zix-0:0.6.2-2.fc43.a 100% |  70.5 MiB/s |  72.2 KiB |  00m00s
+[11/90] Installing sord-0:0.16.18-2.fc4 100% |  20.3 MiB/s | 208.1 KiB |  00m00s
+[12/90] Installing opus-0:1.5.2-3.fc43. 100% | 383.6 MiB/s | 392.8 KiB |  00m00s
+[13/90] Installing sratom-0:0.6.18-2.fc 100% |  68.4 MiB/s |  70.1 KiB |  00m00s
+[14/90] Installing lilv-libs-0:0.24.26- 100% |  72.9 MiB/s | 149.2 KiB |  00m00s
+[15/90] Installing alsa-ucm-0:1.2.15.1- 100% |  18.3 MiB/s | 807.4 KiB |  00m00s
+[16/90] Installing lv2-bankstown-0:1.1. 100% | 341.0 MiB/s | 349.2 KiB |  00m00s
+[17/90] Installing lv2-triforce-0:0.3.2 100% | 371.9 MiB/s | 761.6 KiB |  00m00s
+[18/90] Installing libvorbis-1:1.3.7-13 100% | 276.1 MiB/s | 848.2 KiB |  00m00s
+[19/90] Installing flac-libs-0:1.5.0-5. 100% | 272.5 MiB/s | 558.1 KiB |  00m00s
+[20/90] Installing google-noto-fonts-co 100% |   0.0   B/s |  18.5 KiB |  00m00s
+[21/90] Installing google-noto-sans-vf- 100% | 695.7 MiB/s |   1.4 MiB |  00m00s
+[22/90] Installing vulkan-loader-0:1.4. 100% | 300.3 MiB/s | 615.0 KiB |  00m00s
+[23/90] Installing llvm-filesystem-0:21 100% |   0.0   B/s |   1.1 KiB |  00m00s
+[24/90] Installing llvm-libs-0:21.1.7-1 100% | 718.2 MiB/s | 132.9 MiB |  00m00s
+[25/90] Installing spirv-tools-libs-0:2 100% | 453.7 MiB/s |   5.4 MiB |  00m00s
+[26/90] Installing bluez-libs-0:5.85-1. 100% |  18.2 MiB/s | 279.6 KiB |  00m00s
+>>> Running sysusers scriptlet: rtkit-0:0.11-69.fc43.aarch64                    
+>>> Finished sysusers scriptlet: rtkit-0:0.11-69.fc43.aarch64                   
+>>> Scriptlet output:                                                           
+>>> Failed to connect to audit log, ignoring: Invalid argument                  
+>>> Creating group 'rtkit' with GID 978.                                        
+>>> Creating user 'rtkit' (RealtimeKit) with UID 978 and GID 978.               
+>>>                                                                             
+[27/90] Installing rtkit-0:0.11-69.fc43 100% |   9.8 MiB/s | 201.2 KiB |  00m00s
+>>> Running %post scriptlet: rtkit-0:0.11-69.fc43.aarch64                       
+>>> Finished %post scriptlet: rtkit-0:0.11-69.fc43.aarch64                      
+>>> Scriptlet output:                                                           
+>>> Created symlink '/etc/systemd/system/graphical.target.wants/rtkit-daemon.ser
+>>>                                                                             
+[28/90] Installing graphite2-0:1.3.14-1 100% |  21.5 MiB/s | 241.7 KiB |  00m00s
+[29/90] Installing freetype-0:2.13.3-3. 100% | 265.7 MiB/s | 816.2 KiB |  00m00s
+[30/90] Installing harfbuzz-0:11.5.1-1. 100% | 388.5 MiB/s |   2.7 MiB |  00m00s
+[31/90] Installing abattis-cantarell-vf 100% | 189.9 MiB/s | 194.4 KiB |  00m00s
+[32/90] Installing default-fonts-core-s 100% |   3.6 MiB/s |  18.2 KiB |  00m00s
+[33/90] Installing xml-common-0:0.6.3-6 100% |  39.6 MiB/s |  81.1 KiB |  00m00s
+[34/90] Installing fontconfig-0:2.17.0- 100% |   1.2 MiB/s |   1.2 MiB |  00m01s
+[35/90] Installing pixman-0:0.46.2-2.fc 100% |  64.0 MiB/s | 655.6 KiB |  00m00s
+[36/90] Installing libglvnd-1:1.7.0-8.f 100% | 221.7 MiB/s |   1.3 MiB |  00m00s
+[37/90] Installing libwayland-client-0: 100% |  23.2 MiB/s |  71.2 KiB |  00m00s
+[38/90] Installing libX11-common-0:1.8. 100% |  59.4 MiB/s |   1.2 MiB |  00m00s
+[39/90] Installing libepoxy-0:1.5.10-11 100% | 416.9 MiB/s |   1.3 MiB |  00m00s
+[40/90] Installing libasyncns-0:0.8-31. 100% |  49.2 MiB/s | 100.7 KiB |  00m00s
+[41/90] Installing mpg123-libs-0:1.32.1 100% | 147.9 MiB/s | 757.0 KiB |  00m00s
+[42/90] Installing lame-libs-0:3.100-20 100% | 407.2 MiB/s |   1.2 MiB |  00m00s
+[43/90] Installing gsm-0:1.0.23-1.fc43. 100% |  77.0 MiB/s |  78.8 KiB |  00m00s
+[44/90] Installing libsndfile-0:1.2.2-1 100% | 275.2 MiB/s | 563.6 KiB |  00m00s
+[45/90] Installing webrtc-audio-process 100% | 334.9 MiB/s |   1.3 MiB |  00m00s
+[46/90] Installing libsbc-0:2.0-7.fc43. 100% |  84.4 MiB/s |  86.4 KiB |  00m00s
+[47/90] Installing libldac-0:2.0.2.3-18 100% |  72.4 MiB/s | 148.3 KiB |  00m00s
+[48/90] Installing liblc3-0:1.1.3-5.fc4 100% | 203.0 MiB/s | 207.8 KiB |  00m00s
+[49/90] Installing libebur128-0:1.2.6-1 100% |  71.1 MiB/s |  72.8 KiB |  00m00s
+[50/90] Installing fftw-libs-single-0:3 100% | 371.7 MiB/s |   1.9 MiB |  00m00s
+[51/90] Installing fdk-aac-free-0:2.0.0 100% | 289.4 MiB/s | 592.7 KiB |  00m00s
+[52/90] Installing libXau-0:1.0.12-3.fc 100% | 119.6 MiB/s | 122.5 KiB |  00m00s
+[53/90] Installing libxcb-0:1.17.0-6.fc 100% | 144.5 MiB/s |   2.2 MiB |  00m00s
+[54/90] Installing libX11-0:1.8.12-1.fc 100% | 640.1 MiB/s |   1.3 MiB |  00m00s
+[55/90] Installing libXext-0:1.3.6-4.fc 100% | 143.7 MiB/s | 147.1 KiB |  00m00s
+[56/90] Installing libXrender-0:0.9.12- 100% |  69.6 MiB/s |  71.3 KiB |  00m00s
+[57/90] Installing cairo-0:1.18.4-2.fc4 100% | 445.9 MiB/s |   1.8 MiB |  00m00s
+[58/90] Installing libXrandr-0:1.5.4-6. 100% |  71.2 MiB/s |  72.9 KiB |  00m00s
+[59/90] Installing libXxf86vm-0:1.1.6-3 100% |  68.9 MiB/s |  70.5 KiB |  00m00s
+[60/90] Installing libXfixes-0:6.0.1-6. 100% |  70.0 MiB/s |  71.6 KiB |  00m00s
+[61/90] Installing pulseaudio-libs-0:17 100% | 214.8 MiB/s |   3.4 MiB |  00m00s
+[62/90] Installing pipewire-libs-0:1.4. 100% | 270.0 MiB/s |  10.3 MiB |  00m00s
+[63/90] Installing pipewire-module-filt 100% |  66.8 MiB/s |  68.4 KiB |  00m00s
+[64/90] Installing wireplumber-libs-0:0 100% | 130.7 MiB/s |   2.0 MiB |  00m00s
+[65/90] Installing wireplumber-0:0.5.12 100% |  20.5 MiB/s | 524.1 KiB |  00m00s
+>>> Running sysusers scriptlet: pipewire-0:1.4.9-1.fc43.aarch64                 
+>>> Finished sysusers scriptlet: pipewire-0:1.4.9-1.fc43.aarch64                
+>>> Scriptlet output:                                                           
+>>> Failed to connect to audit log, ignoring: Invalid argument                  
+>>> Creating group 'pipewire' with GID 977.                                     
+>>> Creating user 'pipewire' (PipeWire System Daemon) with UID 977 and GID 977. 
+>>>                                                                             
+[66/90] Installing pipewire-0:1.4.9-1.f 100% |  21.7 MiB/s | 489.5 KiB |  00m00s
+>>> Running %post scriptlet: pipewire-0:1.4.9-1.fc43.aarch64                    
+>>> Finished %post scriptlet: pipewire-0:1.4.9-1.fc43.aarch64                   
+>>> Scriptlet output:                                                           
+>>> Created symlink '/etc/systemd/user/sockets.target.wants/pipewire.socket' 
+>>>                                                                             
+[67/90] Installing lm_sensors-libs-0:3. 100% |  92.7 MiB/s |  95.0 KiB |  00m00s
+[68/90] Installing libxshmfence-0:1.3.2 100% |  68.0 MiB/s |  69.6 KiB |  00m00s
+[69/90] Installing mesa-dri-drivers-0:2 100% | 461.8 MiB/s |  35.6 MiB |  00m00s
+[70/90] Installing mesa-libgbm-0:25.2.7 100% |  11.2 MiB/s |  68.6 KiB |  00m00s
+[71/90] Installing mesa-libGL-0:25.2.7- 100% | 163.5 MiB/s | 334.9 KiB |  00m00s
+[72/90] Installing libglvnd-glx-1:1.7.0 100% | 511.0 MiB/s |   1.0 MiB |  00m00s
+[73/90] Installing libva-0:2.22.0-6.fc4 100% | 137.1 MiB/s | 561.6 KiB |  00m00s
+[74/90] Installing virglrenderer-0:1.2. 100% | 337.9 MiB/s |   1.4 MiB |  00m00s
+[75/90] Installing lsp-plugins-lv2-0:1. 100% | 418.7 MiB/s |  38.9 MiB |  00m00s
+[76/90] Installing libkrunfw-0:4.10.0-2 100% | 695.9 MiB/s |  20.9 MiB |  00m00s
+[77/90] Installing libkrun-0:1.15.1-1.f 100% | 555.8 MiB/s |   6.7 MiB |  00m00s
+[78/90] Installing python3-asn1-0:2.7.0 100% |  96.8 MiB/s |  99.2 KiB |  00m00s
+[79/90] Installing lzfse-libs-0:1.0-8.f 100% |  68.3 MiB/s |  70.0 KiB |  00m00s
+[80/90] Installing python3-asahi_firmwa 100% |  11.6 MiB/s | 130.1 KiB |  00m00s
+[81/90] Installing linux-firmware-vendo 100% |   0.0   B/s |   1.6 KiB |  00m00s
+[82/90] Installing asahi-scripts-0:2025 100% |   1.5 MiB/s |  14.2 KiB |  00m00s
+[83/90] Installing asahi-fwupdate-0:202 100% | 298.2 KiB/s |   2.7 KiB |  00m00s
+[84/90] Installing dracut-asahi-0:20250 100% |   0.0   B/s |   6.6 KiB |  00m00s
+[85/90] Installing muvm-0:0.4.1-2.fc43. 100% | 222.6 MiB/s |   2.9 MiB |  00m00s
+[86/90] Installing asahi-audio-0:3.4-3. 100% | 333.7 MiB/s |   2.0 MiB |  00m00s
+[87/90] Installing alsa-ucm-asahi-0:8-2 100% |   8.5 MiB/s |  17.4 KiB |  00m00s
+[88/90] Installing m1n1-0:1.5.2-1.fc43. 100% |   1.0 GiB/s |   3.0 MiB |  00m00s
+[89/90] Installing unzip-0:6.0-67.fc43. 100% |  38.6 MiB/s | 473.7 KiB |  00m00s
+[90/90] Installing asahi-bless-0:0.4.2- 100% |   3.0 MiB/s | 938.0 KiB |  00m00s
+>>> Running %posttrans scriptlet: wireplumber-0:0.5.12-1.fc43.aarch64           
+>>> Finished %posttrans scriptlet: wireplumber-0:0.5.12-1.fc43.aarch64          
+>>> Scriptlet output:                                                           
+>>> Created symlink '/etc/systemd/user/pipewire-session-manager.service' 
+>>> Created symlink '/etc/systemd/user/pipewire.service.wants/wireplumber.servic
+>>>                                                                             
+>>> Running %triggerin scriptlet: systemd-0:258.3-2.fc43.aarch64                
+>>> Finished %triggerin scriptlet: systemd-0:258.3-2.fc43.aarch64               
+>>> Scriptlet output:                                                           
+>>> Failed to connect to audit log, ignoring: Invalid argument                  
+>>>                                                                             
+>>> Running %triggerin scriptlet: asahi-fwupdate-0:20250713-5.fc43.noarch       
+>>> Finished %triggerin scriptlet: asahi-fwupdate-0:20250713-5.fc43.noarch      
+>>> Scriptlet output:                                                           
+>>> ESP not found and cannot determine ESP PARTUUID.                            
+>>> Make sure that your m1n1 has the right asahi,efi-system-partition configurat
+>>> or that your ESP is mounted at /boot/efi or /boot.                          
+>>>                                                                             
+Complete!
+Removed 24 files, 17 directories (total of 108 MiB). 0 errors occurred.
+--> 2c58306fbf0e
+[2/2] STEP 3/25: RUN rm -rf /usr/lib/modules/*
+--> e2470820c6db
+[2/2] STEP 4/25: COPY --from=extractor /payload/lib/modules /usr/lib/modules
+--> 3af0d86a6221
+[2/2] STEP 5/25: COPY --from=ghcr.io/ublue-os/bluefin:stable /usr/share/ublue-os /usr/share/ublue-os
+Trying to pull ghcr.io/ublue-os/bluefin:stable...
+Getting image source signatures
+Copying blob sha256:c165ab8da62a8817ec4e501560ed338b4de94ec3c076069be610db94bbbc4f8f
+Copying blob sha256:88abc97d19d7a8a03eef0191aa6c2bccdcd13b4a1a92b5141b5b5260447aa96d
+Copying blob sha256:0ef7f0dbe39ab87cc87d2450220f154876642bfae35eae4caaa6f9d2fc72c6fe
+Copying blob sha256:8ff329d26db1981c2cc88e5fc739d78c48e81db49534d1b91cab55abe8676ec6
+Copying blob sha256:c42eb96b100c427a83363de64a5dd9b67095f4882fafb0cd76636550bd21543e
+Copying blob sha256:49e94d9613aac9d6fec8534076807bb6ef5f487eff14bf063caf92fb7d8ad8f1
+Copying blob sha256:febee4a01e58e0559852f6ea18f23089c973756f4fae52a3c81050615ef8c268
+Copying blob sha256:b127197aa534e72f1202b7502713aad99eacd3cc41de3dff33f742f5d0b2acca
+Copying blob sha256:00d44478c0e1b96fb6b02d2eb9bcc2d8bd1653fc8576c5943b3019f2de230adb
+Copying blob sha256:d05297e810b2f2f75667cff3a276e61f867834d990f96ebdddc7df27057670ac
+Copying blob sha256:bcae79d5fd79b67623fb877c944d4979ce50feaa5bc185a12d090ff7a29953d7
+Copying blob sha256:155f2fa7db8f7642f43b5bf34cbe18a5b006a484a17e202c10c1c48be86b372b
+Copying blob sha256:6aa104179012ef428b3aa784167a56eac3361221279aca069571aa225676d23d
+Copying blob sha256:e5af0b47ac5e2b7a915770be230ee919d0c05c482d77b2448823986ddf691941
+Copying blob sha256:701dd5b55f99af93d547f9e1b1cec15ec0d02c4ce73dcd71fde1211159f3b117
+Copying blob sha256:9baf224eb20c6e8428588cd8fc3c919ba8c568a4acc2d7eb553dd82cc2c5287b
+Copying blob sha256:b115dd932df712eddb25cd7c0912dbc945b338beaa71de3ad1f9f09e8a2230e4
+Copying blob sha256:dc0fdc0df7841e335dbc1c2dfab6ae7523031af54958d59c1a32075998f0b13f
+Copying blob sha256:668d84e643919045af51480a160bfa1c5f34e6dc4b33f565d8f884da8d2cc868
+Copying blob sha256:7b949633845b75ffae01f0904dc06d37d5c69887264910833c662237b467cc3d
+Copying blob sha256:c7a1d095f1a4cb6dcc4952427b80be683145b7cff8dbdc6976086b0972824838
+Copying blob sha256:46caaa8499e9c4ce12cb00bd9d2eee9f016f93834625e209d5e1b1346cd07657
+Copying blob sha256:d46b77ef1d1658d98e36faffa5791d8edda57c0f2d477b45fb72ed072c391be2
+Copying blob sha256:9d3035b56889bf8ae9b438a54605b4fcafda680ee7723ed314650dad49ad7d07
+Copying blob sha256:2c167a0ef92e03824600148672cdc52044626a445b0d16fb51341961e456b88f
+Copying blob sha256:95f7412552f236c23257de3d451fc96f2998d6a88c60e67a5057c77a60ef97c3
+Copying blob sha256:91e8e5ab4f29de40dd96351080ef39603c7974a19ef90c512004589897d201a3
+Copying blob sha256:1ba3f048694ae7709123e1c6e81eee6624299239b687409bf2768b77b6e5e9fe
+Copying blob sha256:5aefb5ae5236bdf2a4b8adbe10728b8b1130111ea1fa29ab1399a67dd929872f
+Copying blob sha256:467ec5048463d152fcdddd1e253d67054818e124f5c11fc5f721f3d7a957971b
+Copying blob sha256:29e28a30642fa9444e85e08691a0576735a2745112dc74e7cb0b0a2b77a2fc78
+Copying blob sha256:2224ddc9662621f8d5aa7293ef8ec1839d44bba8725ca531be1fadd8af2d3e80
+Copying blob sha256:67e78b603391eb64ad5b2d891f4fab8de9be8a073cf494dd37d5e20f95ed662e
+Copying blob sha256:0f96f57b0c7d9656d8f873e6e95ed8ad842aa73528cc24aa640c7550054fea07
+Copying blob sha256:9f798aa34abbbddb2e8a621062253b629c93a625449842dd6051922062973595
+Copying blob sha256:e9d0558515942344c1ef23b5f644e014a262170634c3a8204ca432e8d6c91580
+Copying blob sha256:94a1614c952de89943f0217741099ad7799ff2b878ac7b8c01357783be9eb355
+Copying blob sha256:d4946754283716a8c82c4d69a6bfab4418227c827cbf0ba48b014cf30af495fe
+Copying blob sha256:eb676968e1bde7674e5216fa16ec4dec1a407c487ed7b5db64e1dbf174467f12
+Copying blob sha256:25c192f77a87f92adf14bc1f690407657c1d52f3675c69f73f2ad587e9553737
+Copying blob sha256:50ad60441ba89b488ce812db71259d511bc1654ce7c225ad468ca8ad56d7c7f2
+Copying blob sha256:5b2c85b468143176e54e1809faeec5dc7db346ab9d39a335e58961b0c3eb11ae
+Copying blob sha256:2bd783a1d63a5635e55737ff81fc0086bae7b5bef4a11ef750be41b9f826adb3
+Copying blob sha256:b9f21d8e637a536417d051765384a86e52056de4c7c2d39fca5265c703e97452
+Copying blob sha256:f17e5a66818eac85cb3b704800d68191f74308416eadd2804b92a9340c0c5b09
+Copying blob sha256:d765e0580b9686ad8a5ee082e18a35c9cd0ac0142b24f7999e3c5851a96e5e72
+Copying blob sha256:8259902803662fb89d47a249f215ae8de54d276c88bc31c684d45952e8f4cb8b
+Copying blob sha256:8274d47d367dc64fa3481d8d53fbbe853032e4296318da163d86b837d405e2de
+Copying blob sha256:bdd591161eea21826be679c5ac93dc7e079669a87a1602587bef0273a1fb299d
+Copying blob sha256:0ad12d6b0f1a3fc7077322c2795438f7acb58d0190945aac0924b7a1e49dbc68
+Copying blob sha256:5fd81aab3ddda875b5441dcf7f041a15689694eb8dec3bf5923cfd8e2e653461
+Copying blob sha256:9e06c2551bb3cf34560df1d962dfc8cae1c1baa14efee8bd69aefd9c174c1f3c
+Copying blob sha256:40e5a8ff289eceb70a9afc79488d7a4cc00e20de7cd6e0758a09269fa9d58a37
+Copying blob sha256:31f69e098a9f69727b5263450256d160bc3ba506d1310ee8212b3e67211629a0
+Copying blob sha256:cdc6becb5836684a7cd147c7f87d2f3a4179e05bb2fda79fc18762e190b25496
+Copying blob sha256:79ab6a41eceaaaf8aca5b58cfc38e5aedf75c82596c49274ed6aeb0aa564a065
+Copying blob sha256:7fc678c20c892075970137f3add0fae1059e5147d98b5593102ad4271aa87625
+Copying blob sha256:ab3ee1d8950719a67a4e385709fbd844b9abcb15ef2b9cbc048379451ca9f462
+Copying blob sha256:6bc0e96dc2c764fda20803a222d00b5abd5ce7fe1c35bee032a028c3655adbf1
+Copying blob sha256:c2dab09f6c791a7de6fd041008d1ae4ef90d4851b17e74a465f2298977256d68
+Copying blob sha256:1744a5aba0b21f69f02d41335585956b239eae278063c9887dfd0ba87d7068b8
+Copying blob sha256:b0b523d42cc66f3b1b780d500f306f268bbd67c341a974f6549450b837f5ad64
+Copying blob sha256:95bff7d724f245e0e15ead3ccb8bdf3cefb01b00b08fd9476cc17e93754f19eb
+Copying blob sha256:2927dfa7816ed7c3f02b457868f07f11ebbb88b78e9a213e45183851dac2cabd
+Copying blob sha256:a73292bf84774c87385ca3969d36c7b689b045b79b11aa4e3ea2411231206bc5
+Copying blob sha256:0e7ff26dbe7bff341f7804df45da16288a4ef57777bcbd5c5a09cf9753252020
+Copying blob sha256:f5cdcf1ffbdd4f72af0ea8562fb9e3c54104ee9dc0f576d362a37d6817e1a8b0
+Copying blob sha256:4492c7fcfd942b2d1f26f13f245cee916aeea2fa117706504b08fd54abfd4636
+Copying blob sha256:3fa3f57d392f579710c3abb482ee5f21771ef8994e21140efdcdcceaf7e7666f
+Copying blob sha256:8aa3649f26f0b54e4daede5e5bdb676b296f1b29915e6af68eb2dc37eb635f4f
+Copying blob sha256:0519926a0086fd251f9b9ba6d2c9224af21081baa1bb64fbdadc57af3b117872
+Copying blob sha256:3ce01a6f3bf98d55897dfff372753494309fa51dff0d360fe1a3ffa2f3606e30
+Copying blob sha256:ad312c5c40ccd18a3c639cc139211f3c4284e568b69b2e748027cee057986fe0
+Copying config sha256:3c16abbbe1a01e4f206771d37719eb1ee2b31e1208e56d179caed6111a69e122
+Writing manifest to image destination
+WARNING: image platform (linux/amd64) does not match the expected platform (linux/arm64)
+--> ee65e0fb60e7
+[2/2] STEP 6/25: COPY --from=ghcr.io/ublue-os/bluefin:stable /etc/zsh /etc/zsh
+--> 8e7494a4fb53
+[2/2] STEP 7/25: COPY --from=ghcr.io/ublue-os/bluefin:stable /usr/share/gnome-shell/extensions /usr/share/gnome-shell/extensions
+--> eab1114a7f2b
+[2/2] STEP 8/25: RUN rm -f /etc/pipewire/pipewire.conf.d/99-asahi.conf
+--> ef6c7e9c523a
+[2/2] STEP 9/25: COPY build_files/audio-fix.conf /etc/pipewire/pipewire.conf.d/99-wavy-quantum.conf
+--> 2b4753356f10
+[2/2] STEP 10/25: COPY build_files/99-asahi-power.rules /etc/udev/rules.d/99-asahi-power.rules
+--> ddce15403182
+[2/2] STEP 11/25: COPY build_files/fetch-fonts.sh /tmp/fetch-fonts.sh
+--> 08929eb50b60
+[2/2] STEP 12/25: RUN chmod +x /tmp/fetch-fonts.sh && /tmp/fetch-fonts.sh
+Fetching Geist Sans...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 1878k  100 1878k    0     0  1785k      0  0:00:01  0:00:01 --:--:-- 1785k
+Archive:  /tmp/geist.zip
+  inflating: /usr/share/fonts/wavy/Geist-UltraLight.otf  
+  inflating: /usr/share/fonts/wavy/Geist-Thin.otf  
+  inflating: /usr/share/fonts/wavy/Geist-Bold.otf  
+  inflating: /usr/share/fonts/wavy/Geist-Black.otf  
+  inflating: /usr/share/fonts/wavy/Geist-Regular.otf  
+  inflating: /usr/share/fonts/wavy/Geist-Light.otf  
+  inflating: /usr/share/fonts/wavy/Geist-SemiBold.otf  
+  inflating: /usr/share/fonts/wavy/Geist-Medium.otf  
+  inflating: /usr/share/fonts/wavy/Geist-UltraBlack.otf  
+Fetching Geist Mono...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+ 96 1968k   96 1909k    0     0  3092k      0 --:--:-- --:--:-- --:--:-- 3092k100 1968k  100 1968k    0     0  3177k      0 --:--:-- --:--:-- --:--:-- 28.8M
+Archive:  /tmp/geist-mono.zip
+  inflating: /usr/share/fonts/wavy/GeistMono-SemiBold.otf  
+  inflating: /usr/share/fonts/wavy/GeistMono-Light.otf  
+  inflating: /usr/share/fonts/wavy/GeistMono-UltraLight.otf  
+  inflating: /usr/share/fonts/wavy/GeistMono-Thin.otf  
+  inflating: /usr/share/fonts/wavy/GeistMono-UltraBlack.otf  
+  inflating: /usr/share/fonts/wavy/GeistMono-Regular.otf  
+  inflating: /usr/share/fonts/wavy/GeistMono-Bold.otf  
+  inflating: /usr/share/fonts/wavy/GeistMono-Medium.otf  
+  inflating: /usr/share/fonts/wavy/GeistMono-Black.otf  
+Font directories:
+	/usr/share/X11/fonts/Type1
+	/usr/share/X11/fonts/TTF
+	/root/.local/share/fonts
+	/usr/local/share/fonts
+	/usr/share/fonts
+	/root/.fonts
+	/usr/share/fonts/abattis-cantarell-vf-fonts
+	/usr/share/fonts/adwaita-mono-fonts
+	/usr/share/fonts/adwaita-sans-fonts
+	/usr/share/fonts/google-noto-vf
+	/usr/share/fonts/wavy
+/usr/share/X11/fonts/Type1: skipping, no such directory
+/usr/share/X11/fonts/TTF: skipping, no such directory
+/root/.local/share/fonts: skipping, no such directory
+/usr/local/share/fonts: skipping, no such directory
+/usr/share/fonts: caching, new cache contents: 0 fonts, 5 dirs
+/usr/share/fonts/abattis-cantarell-vf-fonts: caching, new cache contents: 6 fonts, 0 dirs
+/usr/share/fonts/adwaita-mono-fonts: caching, new cache contents: 4 fonts, 0 dirs
+/usr/share/fonts/adwaita-sans-fonts: caching, new cache contents: 20 fonts, 0 dirs
+/usr/share/fonts/google-noto-vf: caching, new cache contents: 10 fonts, 0 dirs
+/usr/share/fonts/wavy: caching, new cache contents: 18 fonts, 0 dirs
+/root/.fonts: skipping, no such directory
+/usr/share/fonts/abattis-cantarell-vf-fonts: skipping, looped directory detected
+/usr/share/fonts/adwaita-mono-fonts: skipping, looped directory detected
+/usr/share/fonts/adwaita-sans-fonts: skipping, looped directory detected
+/usr/share/fonts/google-noto-vf: skipping, looped directory detected
+/usr/share/fonts/wavy: skipping, looped directory detected
+/usr/lib/fontconfig/cache: cleaning cache directory
+/root/.cache/fontconfig: not cleaning non-existent cache directory
+/root/.fontconfig: not cleaning non-existent cache directory
+/usr/bin/fc-cache-64: succeeded
+--> 4fd3b86f50db
+[2/2] STEP 13/25: COPY build_files/zz-wavy-defaults.gschema.override /usr/share/glib-2.0/schemas/zz-wavy-defaults.gschema.override
+--> 6bce2878fe4d
+[2/2] STEP 14/25: RUN glib-compile-schemas /usr/share/glib-2.0/schemas
+Warning: Schema “org.gnome.system.locale” has path “/system/locale/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy” has path “/system/proxy/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy.http” has path “/system/proxy/http/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy.https” has path “/system/proxy/https/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy.ftp” has path “/system/proxy/ftp/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy.socks” has path “/system/proxy/socks/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+--> 3e8431890753
+[2/2] STEP 15/25: COPY build_files/color-tint.sh /usr/bin/wavy-nightlight
+--> 62c3648ef6cd
+[2/2] STEP 16/25: RUN chmod +x /usr/bin/wavy-nightlight
+--> 54b17cefca53
+[2/2] STEP 17/25: COPY build_files/wavy-setup.sh /usr/bin/wavy-setup
+--> 89f600266a30
+[2/2] STEP 18/25: RUN chmod +x /usr/bin/wavy-setup
+--> eb93af1fb7c2
+[2/2] STEP 19/25: COPY build_files/wavy-nightlight.service /usr/lib/systemd/user/
+--> ca88e60fe197
+[2/2] STEP 20/25: RUN mkdir -p /usr/lib/systemd/user/default.target.wants &&     ln -sf /usr/lib/systemd/user/wavy-nightlight.service /usr/lib/systemd/user/default.target.wants/wavy-nightlight.service
+--> 9d4e7ba75cca
+[2/2] STEP 21/25: RUN echo 'add_drivers+=" nvme-apple " hostonly="no" ' > /etc/dracut.conf.d/asahi-nvme.conf
+--> 6d5184c2335a
+[2/2] STEP 22/25: RUN KVER=$(ls /usr/lib/modules | grep asahi | head -n 1) &&     echo "Generating Initramfs for $KVER" &&     depmod -a $KVER &&     dracut --force --kver $KVER
+Generating Initramfs for 6.17.12-400.asahi.fc41.aarch64+16k
+/etc/dracut.conf.d/asahi-nvme.conf:add_drivers+=" nvme-apple " hostonly="no" 
+
+dracut[W]: <key>+=" <values> ": <values> should have surrounding white spaces!
+dracut[W]: This will lead to unwanted side effects! Please fix the configuration file.
+
+dracut[E]: No '/dev/log' or 'logger' included for syslog logging
+dracut-install: ERROR: installing '/root'
+dracut[E]: FAILED: /usr/lib/dracut/dracut-install -D /var/tmp/dracut.dIy2grF/initramfs -f /root
+--> 3a76abc3ecf6
+[2/2] STEP 23/25: RUN echo 'Xft.dpi: 120' > /etc/X11/Xresources
+--> 277db358f6c3
+[2/2] STEP 24/25: ENV GDK_SCALE=1
+--> bab487457834
+[2/2] STEP 25/25: RUN bootc container lint
+Lint warning: nonempty-boot: Found non-empty /boot:
+  initramfs-6.17.12-400.asahi.fc41.aarch64+16k.img
+
+Lint warning: var-log: Found non-empty logfiles:
+  /var/log/dnf5.log
+
+Lint warning: var-tmpfiles: Found content in /var missing systemd tmpfiles.d entries:
+  d /var/cache/libX11 0755 root root - -
+  d /var/cache/libX11/compose 0755 root root - -
+  d /var/cache/libdnf5 0755 root root - -
+  d /var/lib/dnf 0755 root root - -
+  d /var/lib/dnf/repos 0755 root root - -
+  ...and 2 more
+Found non-directory/non-symlink files in /var:
+  var/lib/dnf/repos/fedora-d83774fb3740ff31/countme
+  var/lib/dnf/repos/updates-3d1c18847d0d50ed/countme
+  var/cache/ldconfig/aux-cache
+  var/log/dnf5.log
+
+Checks passed: 9
+Checks skipped: 1
+Warnings: 3
+[2/2] COMMIT asahi-substrate:latest
+--> c2c93ad6a999
+Successfully tagged localhost/asahi-substrate:latest
+c2c93ad6a999eaef78da497d3e67e1cb2ecee3b88bf6ebe4353e15bec11a03da

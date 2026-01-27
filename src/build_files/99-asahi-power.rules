@@ -1,0 +1,4 @@
+# Aggressive Power Save for Apple Silicon
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x106b", ATTR{device}=="0x2005", ATTR{power/control}="auto"
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x106b", ATTR{device}=="0x0600", ATTR{power/control}="auto"
+ACTION=="add", SUBSYSTEM=="pci", ATTR{power/control}="auto"

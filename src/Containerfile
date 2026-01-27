@@ -1,0 +1,72 @@
+# STAGE 1: THE EXTRACTOR (Fedora)
+FROM quay.io/fedora/fedora:41 as extractor
+RUN dnf install -y 'dnf5-command(copr)' cpio findutils
+RUN dnf copr enable -y @asahi/kernel
+WORKDIR /payload
+RUN dnf download --resolve kernel-16k
+RUN for rpm in *.rpm; do rpm2cpio "$rpm" | cpio -idm; done
+# Identify kernel version and ensure vmlinuz is in the modules dir (OSTree standard)
+RUN KVER=$(find lib/modules -maxdepth 1 -mindepth 1 -type d -printf "%f") && \
+    if [ ! -f lib/modules/$KVER/vmlinuz ]; then \
+        cp boot/vmlinuz-* lib/modules/$KVER/vmlinuz; \
+    fi
+
+# STAGE 2: THE ASSEMBLY (Fedora Bootc)
+FROM quay.io/fedora/fedora-bootc:43
+
+# 2a. Hardware Solder (Packages)
+# Attempting to include muvm for 16k app support
+RUN dnf install -y 'dnf5-command(copr)' && \
+    dnf copr enable -y @asahi/mesa && \
+    dnf install -y --setopt=install_weak_deps=False \
+    mesa-dri-drivers asahi-fwupdate asahi-bless asahi-audio alsa-ucm-asahi \
+    asahi-scripts m1n1 dracut-asahi unzip muvm && \
+    dnf clean all
+
+# 2b. Kernel Graft
+# We must remove the stock kernel to satisfy 'bootc container lint'
+RUN rm -rf /usr/lib/modules/*
+COPY --from=extractor /payload/lib/modules /usr/lib/modules
+
+# 2c. Userspace Graft (Bluefin)
+COPY --from=ghcr.io/ublue-os/bluefin:stable /usr/share/ublue-os /usr/share/ublue-os
+COPY --from=ghcr.io/ublue-os/bluefin:stable /etc/zsh /etc/zsh
+COPY --from=ghcr.io/ublue-os/bluefin:stable /usr/share/gnome-shell/extensions /usr/share/gnome-shell/extensions
+
+# 2d. Audio Hardening (Deep Research Fixes)
+# Remove legacy config that causes 100% volume blast
+RUN rm -f /etc/pipewire/pipewire.conf.d/99-asahi.conf
+# Apply Quantum fix for popping
+COPY build_files/audio-fix.conf /etc/pipewire/pipewire.conf.d/99-wavy-quantum.conf
+
+# 2e. Power & Fonts
+COPY build_files/99-asahi-power.rules /etc/udev/rules.d/99-asahi-power.rules
+COPY build_files/fetch-fonts.sh /tmp/fetch-fonts.sh
+RUN chmod +x /tmp/fetch-fonts.sh && /tmp/fetch-fonts.sh
+COPY build_files/zz-wavy-defaults.gschema.override /usr/share/glib-2.0/schemas/zz-wavy-defaults.gschema.override
+RUN glib-compile-schemas /usr/share/glib-2.0/schemas
+
+# 2f. Setup Wizard & Services
+COPY build_files/color-tint.sh /usr/bin/wavy-nightlight
+RUN chmod +x /usr/bin/wavy-nightlight
+COPY build_files/wavy-setup.sh /usr/bin/wavy-setup
+RUN chmod +x /usr/bin/wavy-setup
+COPY build_files/wavy-nightlight.service /usr/lib/systemd/user/
+RUN mkdir -p /usr/lib/systemd/user/default.target.wants && \
+    ln -sf /usr/lib/systemd/user/wavy-nightlight.service /usr/lib/systemd/user/default.target.wants/wavy-nightlight.service
+
+# 2g. Initramfs & Boot Logic
+RUN echo 'add_drivers+=" nvme-apple "' > /etc/dracut.conf.d/asahi-nvme.conf && \
+    echo 'hostonly="no"' >> /etc/dracut.conf.d/asahi-nvme.conf && \
+    echo 'omit_dracutmodules+=" syslog "' >> /etc/dracut.conf.d/asahi-nvme.conf
+RUN KVER=$(ls /usr/lib/modules | grep asahi | head -n 1) && \
+    echo "Generating Initramfs for $KVER" && \
+    depmod -a $KVER && \
+    dracut --force --kver $KVER
+
+# 2h. Usability Defaults
+RUN echo 'Xft.dpi: 120' > /etc/X11/Xresources
+ENV GDK_SCALE=1
+
+# 2i. THE LINTER (Hard Stop if structure is wrong)
+RUN bootc container lint
