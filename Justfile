@@ -3,13 +3,24 @@ registry := "ghcr.io"
 username := `git config user.name | tr '[:upper:]' '[:lower:]' | tr -d ' '`
 tag := "latest"
 
-# Build the image locally for ARM64
+# Build the v2 hybrid image (GNOME + Bluefin graft)
 build:
     podman build \
         --platform linux/arm64 \
-        -f source/Containerfile \
+        -f src/Containerfile \
         --tag {{image_name}}:{{tag}} \
         .
+
+# Build the v3 minimal substrate (no desktop, SSH+Tailscale baked in)
+build-substrate:
+    podman build \
+        --platform linux/arm64 \
+        -f src/Containerfile.substrate \
+        --tag {{image_name}}-minimal:{{tag}} \
+        .
+
+# Build both variants
+build-all: build build-substrate
 
 # Verify the hardware drivers in the built image
 verify:

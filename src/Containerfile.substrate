@@ -1,0 +1,129 @@
+# FORMLESS SUBSTRATE v3
+# Minimal Apple Silicon bootc image with remote access baked in
+#
+# Philosophy: Boot directly to Formless, not GNOME
+# Remote access (SSH + Tailscale) works even if display fails
+
+# =============================================================================
+# STAGE 1: KERNEL EXTRACTION
+# =============================================================================
+FROM quay.io/fedora/fedora:41 as extractor
+
+RUN dnf install -y 'dnf5-command(copr)' cpio findutils
+RUN dnf copr enable -y @asahi/kernel
+
+WORKDIR /payload
+RUN dnf download --resolve kernel-16k
+RUN for rpm in *.rpm; do rpm2cpio "$rpm" | cpio -idm; done
+
+# Ensure vmlinuz is in the modules dir (OSTree standard)
+RUN KVER=$(find lib/modules -maxdepth 1 -mindepth 1 -type d -printf "%f") && \
+    if [ ! -f lib/modules/$KVER/vmlinuz ]; then \
+        cp boot/vmlinuz-* lib/modules/$KVER/vmlinuz; \
+    fi
+
+# =============================================================================
+# STAGE 2: MINIMAL SUBSTRATE
+# =============================================================================
+FROM quay.io/fedora/fedora-bootc:43
+
+# -----------------------------------------------------------------------------
+# 2a. Hardware Enablement (Asahi - REQUIRED)
+# -----------------------------------------------------------------------------
+RUN dnf install -y 'dnf5-command(copr)' && \
+    dnf copr enable -y @asahi/mesa && \
+    dnf install -y --setopt=install_weak_deps=False \
+        # GPU
+        mesa-dri-drivers \
+        # Firmware & Tools
+        asahi-fwupdate \
+        asahi-bless \
+        asahi-scripts \
+        # Audio (CRITICAL - speakersafetyd prevents hardware damage)
+        asahi-audio \
+        alsa-ucm-asahi \
+        speakersafetyd \
+        pipewire \
+        wireplumber \
+        # Boot
+        m1n1 \
+        dracut-asahi && \
+    dnf clean all
+
+# -----------------------------------------------------------------------------
+# 2b. Kernel Graft
+# -----------------------------------------------------------------------------
+RUN rm -rf /usr/lib/modules/*
+COPY --from=extractor /payload/lib/modules /usr/lib/modules
+
+# -----------------------------------------------------------------------------
+# 2c. Remote Access Layer (SSH + Tailscale) - ALWAYS AVAILABLE
+# -----------------------------------------------------------------------------
+RUN dnf install -y --setopt=install_weak_deps=False \
+        openssh-server \
+        tailscale && \
+    dnf clean all
+
+# Enable services (start before anything else)
+RUN systemctl enable sshd.service && \
+    systemctl enable tailscaled.service
+
+# SSH hardening - keys only
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+
+# Prepare authorized_keys location
+RUN mkdir -p /etc/skel/.ssh && chmod 700 /etc/skel/.ssh
+
+# Tailscale auto-start service (uses auth key from /etc/default/tailscale-autostart)
+COPY build_files/tailscale-autostart.service /usr/lib/systemd/system/
+RUN systemctl enable tailscale-autostart.service
+
+# -----------------------------------------------------------------------------
+# 2d. Network
+# -----------------------------------------------------------------------------
+RUN dnf install -y --setopt=install_weak_deps=False \
+        NetworkManager \
+        iwd && \
+    dnf clean all
+
+# -----------------------------------------------------------------------------
+# 2e. Audio Hardening (prevent crackling/popping)
+# -----------------------------------------------------------------------------
+RUN rm -f /etc/pipewire/pipewire.conf.d/99-asahi.conf
+COPY build_files/audio-fix.conf /etc/pipewire/pipewire.conf.d/99-substrate-quantum.conf
+
+# -----------------------------------------------------------------------------
+# 2f. Power Management
+# -----------------------------------------------------------------------------
+COPY build_files/99-asahi-power.rules /etc/udev/rules.d/
+
+# -----------------------------------------------------------------------------
+# 2g. Initramfs Generation
+# -----------------------------------------------------------------------------
+RUN echo 'add_drivers+=" nvme-apple "' > /etc/dracut.conf.d/asahi.conf && \
+    echo 'hostonly="no"' >> /etc/dracut.conf.d/asahi.conf && \
+    echo 'omit_dracutmodules+=" syslog "' >> /etc/dracut.conf.d/asahi.conf
+
+RUN KVER=$(ls /usr/lib/modules | grep asahi | head -n 1) && \
+    echo "Generating initramfs for $KVER" && \
+    depmod -a $KVER && \
+    dracut --force --kver $KVER
+
+# -----------------------------------------------------------------------------
+# 2h. Validation
+# -----------------------------------------------------------------------------
+RUN bootc container lint
+
+# =============================================================================
+# WHAT'S NOT INCLUDED (vs v2 hybrid):
+# - GNOME desktop
+# - Bluefin userspace graft
+# - GDM login manager
+# - Setup wizard
+# - Fonts, themes, extensions
+#
+# TOTAL: ~500MB instead of ~2GB
+# =============================================================================
