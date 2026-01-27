@@ -1,0 +1,16 @@
+[Unit]
+Description=Formless First Boot Setup
+ConditionPathExists=!/var/lib/formless/.first-boot-done
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/formless-first-boot
+ExecStartPost=/usr/bin/touch /var/lib/formless/.first-boot-done
+RemainAfterExit=yes
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target

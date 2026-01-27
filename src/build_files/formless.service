@@ -1,0 +1,19 @@
+[Unit]
+Description=Formless Kernel
+After=network-online.target pipewire.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=formless
+ExecStart=/home/linuxbrew/.linuxbrew/bin/formless daemon
+Restart=always
+RestartSec=5
+Environment=FORMLESS_HOME=/home/formless/.formless
+Environment=PATH=/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

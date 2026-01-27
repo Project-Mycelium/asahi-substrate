@@ -190,53 +190,14 @@ RUN chmod +x /usr/libexec/formless-first-boot
 RUN mkdir -p /var/lib/formless
 
 # First-boot service
-RUN mkdir -p /usr/lib/systemd/system && \
-    cat > /usr/lib/systemd/system/formless-first-boot.service << 'EOF'
-[Unit]
-Description=Formless First Boot Setup
-ConditionPathExists=!/var/lib/formless/.first-boot-done
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/libexec/formless-first-boot
-ExecStartPost=/usr/bin/touch /var/lib/formless/.first-boot-done
-RemainAfterExit=yes
-StandardOutput=journal+console
-StandardError=journal+console
-
-[Install]
-WantedBy=multi-user.target
-EOF
+COPY build_files/formless-first-boot.service /usr/lib/systemd/system/
 RUN systemctl enable formless-first-boot.service 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
 # 3i. Formless Integration (placeholder for binary)
 # -----------------------------------------------------------------------------
 # Formless service definition (binary will be installed via Homebrew or container)
-RUN mkdir -p /usr/lib/systemd/system && \
-    cat > /usr/lib/systemd/system/formless.service << 'EOF'
-[Unit]
-Description=Formless Kernel
-After=network-online.target pipewire.service
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=formless
-ExecStart=/home/linuxbrew/.linuxbrew/bin/formless daemon
-Restart=always
-RestartSec=5
-Environment=FORMLESS_HOME=/home/formless/.formless
-Environment=PATH=/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin
-StandardInput=tty
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOF
+COPY build_files/formless.service /usr/lib/systemd/system/
 
 # Create formless user (UID 1000 to match Homebrew directory ownership)
 RUN useradd -m -u 1000 -s /bin/bash -G wheel,audio,video formless 2>/dev/null || true
