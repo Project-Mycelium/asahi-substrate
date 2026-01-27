@@ -165,5 +165,23 @@ cp ~/src/formless-kernel/target/release/formless /home/linuxbrew/.linuxbrew/bin/
 FORMLESS_HOME=/home/formless/.formless formless start
 ```
 
+## Podman Fix: INCOMPLETE - Next Session
+
+**Root cause identified:** The local repo has podman detection enabled (commit `a3beae4`), but only `lib.rs` was synced to M1. That commit changed **35 files** across multiple crates. Partial sync = inconsistent binary.
+
+**Fix for next session:**
+```bash
+# Full source sync (from Mac):
+rsync -avz --delete --exclude 'target' /Users/eric/src/formless-kernel/ formless@100.73.161.5:~/src/formless-kernel/
+
+# Rebuild in container (on M1):
+podman run --rm -v ~/src/formless-kernel:/build:Z -w /build fedora:42 bash -c \
+  'dnf install -y gcc gcc-c++ make rust cargo openssl-devel protobuf-compiler protobuf-devel alsa-lib-devel libstdc++-devel && cargo build --release'
+
+# Install and test:
+cp ~/src/formless-kernel/target/release/formless /home/linuxbrew/.linuxbrew/bin/
+FORMLESS_HOME=/home/formless/.formless formless start
+```
+
 ---
 *Handoff updated: 2026-01-27*
