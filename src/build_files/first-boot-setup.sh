@@ -86,7 +86,34 @@ sudo -u "$HOMEBREW_USER" "$HOMEBREW_PREFIX/bin/brew" install \
     eza \
     fzf \
     starship \
+    rustup-init \
+    openssl \
+    pkg-config \
     || log "Some tools may have failed to install (non-fatal)"
+
+# =============================================================================
+# 2b. RUST TOOLCHAIN
+# =============================================================================
+log "Installing Rust toolchain..."
+
+CARGO_HOME="/home/$HOMEBREW_USER/.cargo"
+if [ ! -f "$CARGO_HOME/bin/rustc" ]; then
+    sudo -u "$HOMEBREW_USER" "$HOMEBREW_PREFIX/bin/rustup-init" -y
+    log "Rust toolchain installed"
+else
+    log "Rust toolchain already installed"
+fi
+
+# Add cargo to profile if not present
+if ! grep -q '\.cargo/env' "/home/$HOMEBREW_USER/.bashrc" 2>/dev/null; then
+    cat >> "/home/$HOMEBREW_USER/.bashrc" << 'EOF'
+
+# Rust/Cargo
+[ -f ~/.cargo/env ] && source ~/.cargo/env
+EOF
+    chown "$HOMEBREW_USER:$HOMEBREW_USER" "/home/$HOMEBREW_USER/.bashrc"
+    log "Added Cargo to shell profile"
+fi
 
 # =============================================================================
 # 3. FORMLESS INSTALLATION
@@ -104,15 +131,32 @@ if [ -n "${FORMLESS_TAP:-}" ]; then
 elif [ -d "/home/$HOMEBREW_USER/src/formless-kernel" ]; then
     log "Found Formless source - building..."
     cd "/home/$HOMEBREW_USER/src/formless-kernel"
-    sudo -u "$HOMEBREW_USER" cargo build --release
-    cp target/release/formless "$HOMEBREW_PREFIX/bin/"
+
+    # Set up build environment with OpenSSL paths
+    export OPENSSL_DIR="$HOMEBREW_PREFIX/opt/openssl"
+    export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/openssl/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+    export PATH="$CARGO_HOME/bin:$PATH"
+
+    sudo -u "$HOMEBREW_USER" \
+        OPENSSL_DIR="$OPENSSL_DIR" \
+        PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
+        PATH="$CARGO_HOME/bin:$PATH" \
+        cargo build --release
+
+    # Install all available binaries
+    for bin in formless formless-kernel formless-dashboard; do
+        if [ -f "target/release/$bin" ]; then
+            cp "target/release/$bin" "$HOMEBREW_PREFIX/bin/"
+            chmod +x "$HOMEBREW_PREFIX/bin/$bin"
+            log "Installed: $bin"
+        fi
+    done
     log "Formless built and installed"
 else
     log "Formless not available - will need manual installation"
-    log "Options:"
-    log "  1. brew tap <formless-tap> && brew install formless"
-    log "  2. Clone and build: git clone <repo> && cargo build --release"
-    log "  3. Use container: podman run formless"
+    log "Run: ~/scripts/setup-kernel.sh (after cloning formless-kernel)"
+    log "Or:  git clone https://github.com/ericrowan/formless-kernel.git ~/src/formless-kernel"
+    log "     ~/scripts/setup-kernel.sh"
 fi
 
 # =============================================================================
@@ -148,7 +192,9 @@ log ""
 log "Next steps:"
 log "  1. SSH in: ssh formless@<ip>"
 log "  2. Join Tailscale: sudo tailscale up"
-log "  3. Install Formless: brew install formless (or build from source)"
-log "  4. Start Formless: systemctl --user start formless"
+log "  3. Install Formless kernel:"
+log "       git clone https://github.com/ericrowan/formless-kernel.git ~/src/formless-kernel"
+log "       ./scripts/setup-kernel.sh"
+log "  4. Or if kernel was pre-cloned: sudo systemctl start formless"
 log ""
 log "Welcome to Formless Substrate."

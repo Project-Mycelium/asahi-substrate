@@ -102,6 +102,10 @@ RUN mkdir -p /var/home/linuxbrew/.linuxbrew && \
 COPY build_files/first-boot-setup.sh /usr/libexec/formless-first-boot
 RUN chmod +x /usr/libexec/formless-first-boot
 
+# Kernel setup script (manual post-boot installation)
+COPY build_files/setup-kernel.sh /usr/local/bin/setup-kernel
+RUN chmod +x /usr/local/bin/setup-kernel
+
 # Create state directory for first-boot marker
 RUN mkdir -p /var/lib/formless
 

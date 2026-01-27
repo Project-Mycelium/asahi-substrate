@@ -56,9 +56,56 @@ On first boot, the system will:
 1. Set up SSH keys
 2. Install Homebrew
 3. Install essential CLI tools (neovim, ripgrep, fd, bat, eza, fzf, starship)
-4. Create user directories
+4. Install Rust toolchain (for building formless-kernel)
+5. Create `.formless/` directories (inbox, sessions, projects)
 
 This takes a few minutes. You can watch progress on the console or just wait and SSH in.
+
+## Formless Kernel Integration
+
+After first boot, you can install the Formless Kernel to enable the full daemon swarm:
+
+```bash
+# SSH into your substrate
+ssh formless@<your-mac-ip>
+
+# Clone the kernel repository
+git clone https://github.com/ericrowan/formless-kernel.git ~/src/formless-kernel
+
+# Run the setup script
+setup-kernel
+```
+
+The setup script will:
+1. Install Rust toolchain (if not present)
+2. Build the kernel from source
+3. Install binaries to Homebrew's bin directory
+4. Enable and start the `formless.service`
+
+### Verify Installation
+
+```bash
+# Check service status
+systemctl status formless
+
+# Check socket exists
+ls -la ~/.formless/kernel.sock
+
+# Test CLI
+formless status
+
+# View logs
+journalctl -u formless -f
+```
+
+### Manual Build (if needed)
+
+```bash
+cd ~/src/formless-kernel
+cargo build --release
+cp target/release/formless /home/linuxbrew/.linuxbrew/bin/
+sudo systemctl start formless
+```
 
 ## Updating
 
@@ -92,8 +139,12 @@ Builds run automatically:
 ┌─────────────────────────────────────────────┐
 │           Formless Substrate                │
 ├─────────────────────────────────────────────┤
-│  User Tools (Homebrew)                      │
-│  - neovim, ripgrep, fd, bat, etc.           │
+│  Formless Kernel (optional)                 │
+│  - 13 specialized daemons                   │
+│  - JSON-RPC via ~/.formless/kernel.sock     │
+├─────────────────────────────────────────────┤
+│  User Tools (Homebrew + Rust)               │
+│  - neovim, ripgrep, fd, bat, cargo, etc.    │
 ├─────────────────────────────────────────────┤
 │  System Services                            │
 │  - sshd, tailscaled, speakersafetyd         │
@@ -114,6 +165,8 @@ Builds run automatically:
 | `src/build_files/formless-user.conf` | User creation (sysusers) |
 | `src/build_files/formless-home.conf` | Home directory (tmpfiles) |
 | `src/build_files/first-boot-setup.sh` | First boot automation |
+| `src/build_files/setup-kernel.sh` | Kernel installation script |
+| `src/build_files/formless.service` | Kernel systemd service |
 | `src/build_files/authorized_keys.d/` | SSH public keys |
 
 ## Troubleshooting
