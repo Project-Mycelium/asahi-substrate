@@ -1,0 +1,16 @@
+[Unit]
+Description=Tailscale Auto-Join on First Boot
+After=tailscaled.service network-online.target
+Wants=tailscaled.service network-online.target
+ConditionPathExists=!/var/lib/tailscale/tailscaled.state
+
+[Service]
+Type=oneshot
+# Uses auth key from environment or file
+# Set TAILSCALE_AUTHKEY in /etc/default/tailscale-autostart
+EnvironmentFile=-/etc/default/tailscale-autostart
+ExecStart=/bin/sh -c 'if [ -n "$TAILSCALE_AUTHKEY" ]; then /usr/bin/tailscale up --authkey="$TAILSCALE_AUTHKEY" --hostname=formless-substrate --accept-routes; else echo "No TAILSCALE_AUTHKEY set, skipping auto-join"; fi'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
