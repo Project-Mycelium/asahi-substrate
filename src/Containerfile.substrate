@@ -176,10 +176,11 @@ COPY build_files/99-asahi-power.rules /etc/udev/rules.d/
 # -----------------------------------------------------------------------------
 # 3h. Homebrew Bootstrap (for user-space packages)
 # Install location that works with OSTree immutability
+# Note: /home is a symlink to /var/home in bootc, so we create /var/home first
 # -----------------------------------------------------------------------------
-RUN mkdir -p /home/linuxbrew/.linuxbrew && \
-    chmod 775 /home/linuxbrew && \
-    chown -R 1000:1000 /home/linuxbrew
+RUN mkdir -p /var/home/linuxbrew/.linuxbrew && \
+    chmod 775 /var/home/linuxbrew && \
+    chown -R 1000:1000 /var/home/linuxbrew
 
 # First-boot script to complete Homebrew setup
 COPY build_files/first-boot-setup.sh /usr/libexec/formless-first-boot
