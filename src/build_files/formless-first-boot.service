@@ -3,6 +3,7 @@ Description=Formless First Boot Setup
 ConditionPathExists=!/var/lib/formless/.first-boot-done
 After=network-online.target
 Wants=network-online.target
+Documentation=https://github.com/ericrowan/formless-kernel
 
 [Service]
 Type=oneshot
@@ -13,4 +14,4 @@ StandardOutput=journal+console
 StandardError=journal+console
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=formless.target

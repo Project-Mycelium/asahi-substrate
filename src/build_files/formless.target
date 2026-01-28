@@ -1,0 +1,9 @@
+[Unit]
+Description=Formless System
+Documentation=https://github.com/ericrowan/formless-kernel
+After=multi-user.target
+Wants=multi-user.target formless.service formless-first-boot.service
+
+# This is the system default target - Formless is the only user-facing interface
+[Install]
+WantedBy=default.target

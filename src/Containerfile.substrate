@@ -35,7 +35,22 @@ LABEL org.opencontainers.image.source="https://github.com/ericrowan/asahi-substr
 LABEL containers.bootc="1"
 
 # -----------------------------------------------------------------------------
-# 1. Install additional packages via DNF (base-atomic has DNF available)
+# 1. Remove unnecessary packages from base image (saves ~800MB)
+# -----------------------------------------------------------------------------
+RUN dnf remove -y --setopt=install_weak_deps=False \
+    firefox firefox-langpacks \
+    ibus ibus-anthy ibus-anthy-python ibus-chewing ibus-gtk3 ibus-gtk4 \
+    ibus-hangul ibus-libpinyin ibus-m17n ibus-setup ibus-typing-booster \
+    geolite2-city geolite2-country \
+    cldr-emoji-annotation cldr-emoji-annotation-dtd \
+    google-noto-color-emoji-fonts google-noto-emoji-fonts \
+    default-fonts-core-emoji \
+    python3-botocore \
+    qcom-firmware \
+    || true
+
+# -----------------------------------------------------------------------------
+# 2. Install additional packages via DNF (base-atomic has DNF available)
 # -----------------------------------------------------------------------------
 RUN dnf install -y --setopt=install_weak_deps=False \
     openssh-server \
@@ -48,10 +63,12 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     gcc-c++ \
     make \
     glibc-devel \
+    plymouth \
+    plymouth-theme-spinner \
     && dnf clean all
 
 # -----------------------------------------------------------------------------
-# 2. Remote Access Layer (SSH + Tailscale)
+# 3. Remote Access Layer (SSH + Tailscale)
 # -----------------------------------------------------------------------------
 # SSH hardening - keys only
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
@@ -79,7 +96,7 @@ RUN systemctl enable sshd.service && \
     systemctl enable formless-ssh-setup.service
 
 # -----------------------------------------------------------------------------
-# 3. Audio Configuration
+# 4. Audio Configuration
 # -----------------------------------------------------------------------------
 # Custom PipeWire config (base already has speakersafetyd enabled)
 RUN rm -f /etc/pipewire/pipewire.conf.d/99-asahi.conf 2>/dev/null || true
@@ -89,12 +106,12 @@ COPY build_files/audio-fix.conf /etc/pipewire/pipewire.conf.d/99-substrate-quant
 RUN systemctl enable speakersafetyd.service 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
-# 4. Power Management
+# 5. Power Management
 # -----------------------------------------------------------------------------
 COPY build_files/99-asahi-power.rules /etc/udev/rules.d/
 
 # -----------------------------------------------------------------------------
-# 5. Homebrew Bootstrap
+# 6. Homebrew Bootstrap
 # -----------------------------------------------------------------------------
 # Create Homebrew directory structure
 # Note: /home is a symlink to /var/home in bootc
@@ -118,10 +135,14 @@ COPY build_files/formless-first-boot.service /usr/lib/systemd/system/
 RUN systemctl enable formless-first-boot.service
 
 # -----------------------------------------------------------------------------
-# 6. Formless User & Integration (using systemd-sysusers for bootc compatibility)
+# 7. Formless User & Integration (using systemd-sysusers for bootc compatibility)
 # -----------------------------------------------------------------------------
-# Formless service definition (binary installed via Homebrew or container)
+# Formless service, target, and boot script
 COPY build_files/formless.service /usr/lib/systemd/system/
+COPY build_files/formless.target /usr/lib/systemd/system/
+COPY build_files/formless-boot.sh /usr/libexec/formless-boot
+RUN chmod +x /usr/libexec/formless-boot && \
+    systemctl set-default formless.target
 
 # Create formless user via systemd-sysusers (proper bootc method)
 COPY build_files/formless-user.conf /usr/lib/sysusers.d/formless.conf
@@ -131,7 +152,8 @@ COPY build_files/formless-home.conf /usr/lib/tmpfiles.d/formless-home.conf
 RUN systemd-sysusers /usr/lib/sysusers.d/formless.conf
 
 # Set password for console access (password: formless)
-RUN sed -i 's|^formless:!:|formless:$6$substrate$c8vEgcUeBvCy1CNHsgAYiYtJTIbSCxuuXo.Djmfq/wXD9l5ssIh0JgIaNr29VxNRjuVq.FooPu/fj.3KuGo0H1:|' /etc/shadow
+# Note: systemd-sysusers creates locked accounts with "!*" not "!"
+RUN sed -i 's|^formless:!\*:|formless:$6$substrate$c8vEgcUeBvCy1CNHsgAYiYtJTIbSCxuuXo.Djmfq/wXD9l5ssIh0JgIaNr29VxNRjuVq.FooPu/fj.3KuGo0H1:|' /etc/shadow
 
 # Set up SSH keys for formless user
 COPY build_files/authorized_keys.d/*.pub /tmp/authorized_keys.d/
@@ -146,20 +168,53 @@ RUN mkdir -p /var/home/formless/.ssh && \
 RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/wheel-nopasswd && \
     chmod 440 /etc/sudoers.d/wheel-nopasswd
 
+# Disable getty@tty1 - Formless will handle the console (NO login prompt)
+RUN systemctl mask getty@tty1.service 2>/dev/null || true
+
+# Keep getty@tty2 as emergency fallback shell (Ctrl+Alt+F2)
+RUN mkdir -p /etc/systemd/system/getty@tty2.service.d && \
+    printf '[Unit]\nConditionVirtualization=!container\n[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin formless --noclear %%I $TERM\n' \
+    > /etc/systemd/system/getty@tty2.service.d/override.conf
+
 # -----------------------------------------------------------------------------
-# 7. Branding & Console Configuration
+# 8. Branding & Console Configuration
 # -----------------------------------------------------------------------------
 RUN echo 'substrate' > /etc/hostname
 
 # Larger console font for HiDPI screens (dev-friendly)
-RUN echo 'FONT=sun12x22' > /etc/vconsole.conf
+RUN echo 'FONT=latarcyrheb-sun32' > /etc/vconsole.conf
+
+# Quiet boot - minimal console output during startup
+RUN mkdir -p /etc/kernel && \
+    echo 'quiet loglevel=3 systemd.show_status=false rd.udev.log_level=3 vt.global_cursor_default=0' > /etc/kernel/cmdline
+
+# -----------------------------------------------------------------------------
+# 9. Boot Loader Configuration
+# -----------------------------------------------------------------------------
+# Zero timeout, no menu, no editor
+RUN mkdir -p /boot/loader && \
+    printf 'timeout 0\ndefault ostree-*\neditor no\n' > /boot/loader/loader.conf
+
+# -----------------------------------------------------------------------------
+# 10. Plymouth Boot Splash
+# -----------------------------------------------------------------------------
+# Set spinner theme (minimal, clean) - DISABLED for clean boot
+# RUN plymouth-set-default-theme spinner 2>/dev/null || true
+
+# Replace Fedora watermark with transparent image (cleaner boot) - DISABLED for clean boot
+# COPY build_files/watermark-transparent.png /usr/share/plymouth/themes/spinner/watermark.png
+
+# Rebuild initramfs with plymouth (required for early boot splash) - DISABLED for clean boot
+# RUN KVER=$(ls /usr/lib/modules | head -n 1) && \
+#     dracut --force --add plymouth /boot/initramfs-${KVER}.img ${KVER} 2>/dev/null || \
+#     echo "Plymouth initramfs rebuild skipped (will be done on first boot)"
 
 # OS branding
 RUN echo 'PRETTY_NAME="Formless Substrate (Fedora Asahi)"' > /etc/os-release.d/substrate.conf || \
     sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="Formless Substrate (Fedora Asahi)"/' /etc/os-release
 
 # -----------------------------------------------------------------------------
-# 8. Validation
+# 11. Validation
 # -----------------------------------------------------------------------------
 RUN bootc container lint || echo "Lint warnings (non-fatal)"
 

@@ -1,19 +1,47 @@
 [Unit]
-Description=Formless Kernel
-After=network-online.target pipewire.service
+Description=Formless Kernel - Agentic Operating System
+Documentation=https://github.com/ericrowan/formless-kernel
+After=network-online.target pipewire.service speakersafetyd.service formless-first-boot.service
 Wants=network-online.target
+Requires=formless-first-boot.service
+# Don't start if this is a container or VM (for testing)
+ConditionVirtualization=!container
 
 [Service]
 Type=simple
 User=formless
-ExecStart=/home/linuxbrew/.linuxbrew/bin/formless daemon
+Group=formless
+
+# Run Formless boot script (starts daemon, then dashboard)
+ExecStart=/usr/libexec/formless-boot
+
+# Restart if it crashes
 Restart=always
-RestartSec=5
+RestartSec=2
+
+# Environment setup
 Environment=FORMLESS_HOME=/home/formless/.formless
-Environment=PATH=/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin
+Environment=PATH=/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin:/usr/local/bin
+Environment=TERM=linux
+
+# TTY configuration - connect to active console for TUI display
 StandardInput=tty
-StandardOutput=journal
+StandardOutput=tty
 StandardError=journal
 
+# Allocate TTY
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+
+# Run in foreground on TTY
+Environment=TERM=xterm-256color
+SyslogIdentifier=formless
+
+# Ensure service doesn't detach from TTY
+KillMode=mixed
+KillSignal=SIGTERM
+
 [Install]
-WantedBy=multi-user.target
+# Start as part of formless.target (which is the default)
+WantedBy=formless.target
