@@ -276,4 +276,34 @@ crates/formless-cli/src/main.rs         (3 line changes)
 
 ---
 
+---
+
+## Quick Reference for Next Agent
+
+### Immediate Next Steps
+1. Read this handoff document (you're here!)
+2. Review **plans/BOOT_CHAIN_RESEARCH.md** for boot optimization procedure
+3. Build and deploy: `podman build -f src/Containerfile.substrate -t asahi-substrate .`
+4. SSH to M1 hardware (192.168.8.114) and observe boot
+5. Run investigation commands from BOOT_CHAIN_RESEARCH.md
+
+### Key Files Modified
+- **Substrate:** `src/Containerfile.substrate`, `src/build_files/formless.{service,target,boot.sh}`
+- **Kernel:** `crates/formless-cli/src/{substrate.rs,main.rs}`
+- **Docs:** `plans/BOOT_CHAIN_RESEARCH.md`, `plans/substrate-vision-and-roadmap.md`
+
+### Git Commits
+- Substrate: `2a7c05b` - Direct Formless TUI boot + planning docs
+- Kernel: `4f95cd8` - Substrate command infrastructure
+
+### Hardware
+- **Target:** M1 MacBook at 192.168.8.114
+- **User:** formless (SSH key auth)
+- **Emergency:** Ctrl+Alt+F2 → getty@tty2 shell
+
+### Phase 3 Blocker (If Any)
+None identified. Ready to deploy and test.
+
+---
+
 **Ready for Phase 3. Let's optimize the boot experience! 🚀**
