@@ -1,3 +1,11 @@
+> **⚠ RETIREMENT STAMP — 2026-07-30 (Operation Badger).** The **v1 13-daemon Formless swarm**
+> that this README's "install the Formless Kernel / full daemon swarm" (below) and "13 specialized
+> daemons" sections describe is **RETIRED** — its launchd agents were quarantined 2026-07-17 and its
+> binaries removed from PATH 2026-07-30. Those sections are **historical; do NOT rebuild the swarm.**
+> asahi-substrate itself (the bootable Apple-Silicon OS image documented below) **STAYS — Eric ruled** —
+> but the current Formless it should host is the **hub + v3 kernel** (`~/dev/formless-hub`,
+> `~/src/formless-os`), not the v1 daemon swarm.
+
 # Formless Substrate
 
 A minimal, bootable OS image for Apple Silicon Macs. Built on Fedora Asahi Remix with the Asahi Linux kernel.
@@ -64,6 +72,7 @@ This takes a few minutes. You can watch progress on the console or just wait and
 ## Formless Kernel Integration
 
 After first boot, you can install the Formless Kernel to enable the full daemon swarm:
+> **[RETIRED — see stamp at top; do not rebuild the v1 swarm.]**
 
 ```bash
 # SSH into your substrate
