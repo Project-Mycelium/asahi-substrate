@@ -1,9 +1,12 @@
-> **⚠ RETIREMENT STAMP — 2026-07-30 (Operation Badger).** The **v1 13-daemon Formless swarm**
-> that this README's "install the Formless Kernel / full daemon swarm" (below) and "13 specialized
-> daemons" sections describe is **RETIRED** — its launchd agents were quarantined 2026-07-17 and its
-> binaries removed from PATH 2026-07-30. Those sections are **historical; do NOT rebuild the swarm.**
-> asahi-substrate itself (the bootable Apple-Silicon OS image documented below) **STAYS — Eric ruled** —
-> but the current Formless it should host is the **hub + v3 kernel** (`~/dev/formless-hub`,
+> **RETIREMENT NOTICE — the v1 swarm is retired.** Older versions of this README
+> described installing the v1 13-daemon Formless kernel swarm on this image. That
+> swarm is retired: its launchd agents were quarantined 2026-07-17 and its binaries
+> removed from PATH 2026-07-30. The installation sections that described it have been
+> removed from this document.
+>
+> **This repo is intentionally kept, not abandoned.** asahi-substrate is a dormant
+> bootable Fedora-Asahi server image for Apple Silicon — Eric has ruled it STAYS. The
+> current Formless it is meant to host is the hub + v3 kernel (`~/dev/formless-hub`,
 > `~/src/formless-os`), not the v1 daemon swarm.
 
 # Formless Substrate
@@ -64,57 +67,22 @@ On first boot, the system will:
 1. Set up SSH keys
 2. Install Homebrew
 3. Install essential CLI tools (neovim, ripgrep, fd, bat, eza, fzf, starship)
-4. Install Rust toolchain (for building formless-kernel)
+4. Install Rust toolchain
 5. Create `.formless/` directories (inbox, sessions, projects)
 
 This takes a few minutes. You can watch progress on the console or just wait and SSH in.
 
-## Formless Kernel Integration
+## Hosting Formless
 
-After first boot, you can install the Formless Kernel to enable the full daemon swarm:
-> **[RETIRED — see stamp at top; do not rebuild the v1 swarm.]**
+The v1 kernel-integration section that used to live here — cloning
+`formless-kernel`, running `setup-kernel`, and enabling `formless.service` — has
+been removed: see the retirement notice at the top of this file. The v1 swarm is
+retired and this image no longer documents standing it up.
 
-```bash
-# SSH into your substrate
-ssh formless@<your-mac-ip>
-
-# Clone the kernel repository
-git clone https://github.com/ericrowan/formless-kernel.git ~/src/formless-kernel
-
-# Run the setup script
-setup-kernel
-```
-
-The setup script will:
-1. Install Rust toolchain (if not present)
-2. Build the kernel from source
-3. Install binaries to Homebrew's bin directory
-4. Enable and start the `formless.service`
-
-### Verify Installation
-
-```bash
-# Check service status
-systemctl status formless
-
-# Check socket exists
-ls -la ~/.formless/kernel.sock
-
-# Test CLI
-formless status
-
-# View logs
-journalctl -u formless -f
-```
-
-### Manual Build (if needed)
-
-```bash
-cd ~/src/formless-kernel
-cargo build --release
-cp target/release/formless /home/linuxbrew/.linuxbrew/bin/
-sudo systemctl start formless
-```
+The current Formless runtime is the **hub + v3 kernel**, developed on Eric's
+workstation at `~/dev/formless-hub` and `~/src/formless-os`. asahi-substrate
+remains a clean bootable host for whatever Formless runtime comes next; wiring the
+current runtime onto it is future work, not a step to perform from this README.
 
 ## Updating
 
@@ -148,9 +116,10 @@ Builds run automatically:
 ┌─────────────────────────────────────────────┐
 │           Formless Substrate                │
 ├─────────────────────────────────────────────┤
-│  Formless Kernel (optional)                 │
-│  - 13 specialized daemons                   │
-│  - JSON-RPC via ~/.formless/kernel.sock     │
+│  Formless runtime (hub + v3 kernel)         │
+│  - host target: ~/dev/formless-hub +        │
+│    ~/src/formless-os (wiring is future work)│
+│  - v1 13-daemon swarm: RETIRED, not hosted  │
 ├─────────────────────────────────────────────┤
 │  User Tools (Homebrew + Rust)               │
 │  - neovim, ripgrep, fd, bat, cargo, etc.    │
