@@ -142,7 +142,9 @@ COPY build_files/formless.service /usr/lib/systemd/system/
 COPY build_files/formless.target /usr/lib/systemd/system/
 COPY build_files/formless-boot.sh /usr/libexec/formless-boot
 RUN chmod +x /usr/libexec/formless-boot && \
-    systemctl set-default formless.target
+    systemctl set-default formless.target && \
+    systemctl enable formless.target && \
+    systemctl enable formless.service
 
 # Create formless user via systemd-sysusers (proper bootc method)
 COPY build_files/formless-user.conf /usr/lib/sysusers.d/formless.conf
