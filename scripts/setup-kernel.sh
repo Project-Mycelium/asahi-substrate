@@ -10,7 +10,7 @@ set -euo pipefail
 FORMLESS_USER="formless"
 FORMLESS_HOME="/home/$FORMLESS_USER"
 HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
-KERNEL_REPO="https://github.com/ericrowan/formless-kernel.git"
+KERNEL_REPO="https://github.com/Project-Mycelium/formless-kernel.git"
 KERNEL_DIR="$FORMLESS_HOME/src/formless-kernel"
 FORMLESS_DIR="$FORMLESS_HOME/.formless"
 

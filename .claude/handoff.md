@@ -84,7 +84,7 @@ Apple Silicon Hardware
 
 ## External Dependencies
 
-- **formless-kernel repo**: `github.com/ericrowan/formless-kernel`
+- **formless-kernel repo**: `github.com/Project-Mycelium/formless-kernel`
   - Rust monorepo with 34+ crates
   - 649 tests
   - Builds to `formless`, `formless-kernel`, `formless-dashboard` binaries
@@ -96,7 +96,7 @@ The `formless.service` shows this error because the binary doesn't exist yet. Th
 **Quick fix (current image):**
 ```bash
 ssh formless@<m1-ip>
-git clone https://github.com/ericrowan/formless-kernel.git ~/src/formless-kernel
+git clone https://github.com/Project-Mycelium/formless-kernel.git ~/src/formless-kernel
 cd ~/src/formless-kernel
 cargo build --release
 cp target/release/formless /home/linuxbrew/.linuxbrew/bin/

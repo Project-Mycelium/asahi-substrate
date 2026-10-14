@@ -3,7 +3,7 @@ Description=Formless First Boot Setup
 ConditionPathExists=!/var/lib/formless/.first-boot-done
 After=network-online.target
 Wants=network-online.target
-Documentation=https://github.com/ericrowan/formless-kernel
+Documentation=https://github.com/Project-Mycelium/formless-kernel
 
 [Service]
 Type=oneshot

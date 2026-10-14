@@ -80,7 +80,7 @@ ls -la /etc/systemd/system/formless.target.wants/
 ```ini
 [Unit]
 Description=Formless System
-Documentation=https://github.com/ericrowan/formless-kernel
+Documentation=https://github.com/Project-Mycelium/formless-kernel
 After=multi-user.target
 Wants=multi-user.target formless.service formless-first-boot.service
 
@@ -94,7 +94,7 @@ WantedBy=default.target
 ```ini
 [Unit]
 Description=Formless System
-Documentation=https://github.com/ericrowan/formless-kernel
+Documentation=https://github.com/Project-Mycelium/formless-kernel
 Requires=multi-user.target
 After=multi-user.target
 Wants=formless.service formless-first-boot.service

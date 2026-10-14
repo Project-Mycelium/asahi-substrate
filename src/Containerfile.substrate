@@ -31,7 +31,7 @@ FROM ${BASE_IMAGE}
 # Metadata
 LABEL org.opencontainers.image.title="Formless Substrate"
 LABEL org.opencontainers.image.description="Minimal Apple Silicon OS - Formless IS the interface"
-LABEL org.opencontainers.image.source="https://github.com/ericrowan/asahi-substrate"
+LABEL org.opencontainers.image.source="https://github.com/Project-Mycelium/asahi-substrate"
 LABEL containers.bootc="1"
 
 # -----------------------------------------------------------------------------

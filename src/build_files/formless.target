@@ -1,6 +1,6 @@
 [Unit]
 Description=Formless System
-Documentation=https://github.com/ericrowan/formless-kernel
+Documentation=https://github.com/Project-Mycelium/formless-kernel
 Requires=multi-user.target
 After=multi-user.target
 Wants=formless.service formless-first-boot.service

@@ -155,7 +155,7 @@ elif [ -d "/home/$HOMEBREW_USER/src/formless-kernel" ]; then
 else
     log "Formless not available - will need manual installation"
     log "Run: ~/scripts/setup-kernel.sh (after cloning formless-kernel)"
-    log "Or:  git clone https://github.com/ericrowan/formless-kernel.git ~/src/formless-kernel"
+    log "Or:  git clone https://github.com/Project-Mycelium/formless-kernel.git ~/src/formless-kernel"
     log "     ~/scripts/setup-kernel.sh"
 fi
 
@@ -193,7 +193,7 @@ log "Next steps:"
 log "  1. SSH in: ssh formless@<ip>"
 log "  2. Join Tailscale: sudo tailscale up"
 log "  3. Install Formless kernel:"
-log "       git clone https://github.com/ericrowan/formless-kernel.git ~/src/formless-kernel"
+log "       git clone https://github.com/Project-Mycelium/formless-kernel.git ~/src/formless-kernel"
 log "       ./scripts/setup-kernel.sh"
 log "  4. Or if kernel was pre-cloned: sudo systemctl start formless"
 log ""

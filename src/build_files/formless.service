@@ -1,6 +1,6 @@
 [Unit]
 Description=Formless Kernel - Agentic Operating System
-Documentation=https://github.com/ericrowan/formless-kernel
+Documentation=https://github.com/Project-Mycelium/formless-kernel
 After=network-online.target pipewire.service speakersafetyd.service formless-first-boot.service
 Wants=network-online.target
 Requires=formless-first-boot.service
