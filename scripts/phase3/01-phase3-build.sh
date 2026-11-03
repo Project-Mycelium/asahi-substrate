@@ -4,7 +4,9 @@
 
 set -e
 
-PROJECT_ROOT="/Users/eric/dev/personal/asahi-substrate"
+# The repo root is wherever this script's checkout is (scripts/phase3/ -> two up), so it
+# follows the registry's location for the repo and any worktree, with no literal path.
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REGISTRY="ghcr.io/ericrowan"
 IMAGE_NAME="asahi-substrate"
 TAG="${1:-latest}"
